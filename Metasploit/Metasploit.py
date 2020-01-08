@@ -31,7 +31,7 @@ class Metasploit:
                     self._console_read.append(line)
 
         print(console_data['data'])
-        print(console_data['busy'])
+        self.client_Isbusy = False
 
     def send_cmd(self, cmd):
         if self._client.authenticated and not self.client_Isbusy:
