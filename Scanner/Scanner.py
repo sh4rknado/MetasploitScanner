@@ -60,6 +60,9 @@ class Scanner:
             password = input("What is the sudo password ?")
             os.system("echo " + password + " | sudo -S bash " + path)
 
+    def logout(self):
+        self._client.logout()
+
     # ------------------------------------------- < REPORT ANALYSE > -------------------------------------------
 
     def _get_port(self, report, ip):

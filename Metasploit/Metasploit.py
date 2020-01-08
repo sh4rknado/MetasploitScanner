@@ -50,3 +50,6 @@ class Metasploit:
         else:
             print("[ERROR] Client Was Not Authentificated !")
 
+    def logout(self):
+        print("[INFOS] Logout msfrpc client\n")
+        self._client.logout()

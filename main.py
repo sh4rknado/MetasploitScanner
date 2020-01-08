@@ -29,6 +29,12 @@ if __name__ == "__main__":
         scanner.vuln_discovery(ip, ports)
         time.sleep(60)
 
+        scanner.logout()
+        print("----------------------------------")
+        print("Author : zerocool")
+        print("Github : SH4RKNANDO")
+        print("----------------------------------")
+        print("use msfconsole and use (vulns), hosts for showing the gatering Informations")
         exit(0)
     else:
         print("Usage : sudo python3.7 MetasploitScanner.py --ip <Your IP>")
