@@ -7,4 +7,5 @@ while read line; do
 done < $1 >> ip_list
 
 sed -i '/^$/d' ip_list
-sort -u ip_list
+sort -u ip_list >> ip_list2
+mv ip_list2 ip_list
