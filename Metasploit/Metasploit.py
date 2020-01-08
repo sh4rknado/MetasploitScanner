@@ -42,9 +42,8 @@ class Metasploit:
             print("[WAITING] Client was busy !")
             while self.client_Isbusy:
                 time.sleep(5)
-
             print("[INFOS] Client Available now !")
-            self.send_cmd(cmd)
+            console.execute(cmd)
             time.sleep(5)
         else:
             print("[ERROR] Client Was Not Authentificated !")
