@@ -6,7 +6,7 @@ class Metasploit:
         self._client = MsfRpcClient(password=password, port=55556)
         self._client.login(user=user, password=password)
         if self._client.authenticated:
-            print("[SUCESS] Authentification MSGRPC SUCESS")
+            print("[SUCESS] Authentification MSFRPC SUCESS")
         else:
             print("[ERROR] Authentification ERROR !")
         res = self._client.call('console.create')
