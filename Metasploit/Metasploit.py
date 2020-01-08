@@ -1,5 +1,5 @@
 from pymetasploit3.msfrpc import MsfRpcClient
-
+import time
 
 class Metasploit:
     def __init__(self, password, user):
@@ -14,8 +14,10 @@ class Metasploit:
 
     def send_cmd(self, cmd):
         if self._client.authenticated:
-            print(self._console_id)
-            print(cmd)
+
+            while self._client.consoles.console(self._console_id).is_busy():
+                time.sleep(5)
+
             self._client.call('console.write', [self._console_id, cmd])
         else:
             print("Client Was Not Authentificated !")
