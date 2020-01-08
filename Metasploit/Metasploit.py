@@ -6,6 +6,7 @@ import time
 class Metasploit:
 
     def __init__(self, password, user):
+        print("[INFOS] Authentification to Metasploit (msfrpcd) ...")
         self._client = MsfRpcClient(password=password, port=55556)
         self._client.login(user=user, password=password)
 
