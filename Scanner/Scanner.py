@@ -11,7 +11,7 @@ class Scanner:
         self._init_db()
         self._output_dir = os.getcwd() + "/output"
         self._NmapParser = os.getcwd() + "/utilities"
-        self._client = Metasploit(user="msf", password="msf")
+        self._client = Metasploit(user="msf", password="zerocool")
 
     # ------------------------------------------- < INIT FUNCTION > -------------------------------------------
 
