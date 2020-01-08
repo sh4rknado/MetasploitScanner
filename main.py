@@ -28,6 +28,8 @@ if __name__ == "__main__":
         # Discovery Vulns
         scanner.vuln_discovery(ip, ports)
         time.sleep(60)
+
+        exit(0)
     else:
         print("Usage : sudo python3.7 MetasploitScanner.py --ip <Your IP>")
         print("--ip : <Target IP>")
