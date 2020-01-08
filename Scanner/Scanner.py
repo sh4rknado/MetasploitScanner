@@ -169,7 +169,7 @@ class Scanner:
 
             for db in self._db:
                 cpt += 1
-                print("[PROCESS] Processing vuln-scan " + str(cpt) + "/" + str(len(self._db)) + " \n")
+                print("[PROCESS] Processing vuln-scan on " + port + " with " + db + " :" + str(cpt) + "/" + str(len(self._db)) + " \n")
                 cmd = "db_nmap --script nmap-vulners,vulscan --script-args vulscandb=" + str(db) + " -sV -p " + port + " " + ip
                 self._client.send_cmd(cmd)
         else:
