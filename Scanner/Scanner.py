@@ -65,10 +65,11 @@ class Scanner:
     def _get_port(self, report, ip):
         dir_port_list = self._output_dir + "/" + ip + "-portlist"
 
-        cmd = "python " + self._NmapParser + "/nmap_xml_parser.py -f " + report + \
-              " -pu | sed -e 's/[^0-9]/ /g' -e 's/^ *//g' -e 's/ *$//g' | tr -s ' ' | sed 's/ /\n/g' >> " \
-              + dir_port_list
+        cmd = "python " + self._NmapParser + "/nmap_xml_parser.py -f " + report + " -pu | sed -e " + "'" \
+              + "s/[^0-9]/ /g" + "'" + "-e " + "'" + "s/^ *//g" + "'" + " -e " + "'" + "s/ *$//g" + "'" \
+              + " | tr -s " + "' " + "'" + " | sed " + "'" + "s/ /\n/g" + "'" + " >> " + dir_port_list
 
+        print(cmd)
         os.system(cmd)
 
     def _get_port_list(self, ip):
