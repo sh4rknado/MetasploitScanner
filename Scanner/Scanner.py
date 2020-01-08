@@ -1,5 +1,6 @@
 import os
 import socket
+from Metasploit.Metasploit import Metasploit
 
 
 class Scanner:
@@ -10,8 +11,7 @@ class Scanner:
         self._init_db()
         self._output_dir = os.getcwd() + "/output"
         self._NmapParser = os.getcwd() + "/utilities"
-        self.msf_cmd = "msfconsole -x " + '"'
-        self.msf_end = " exit -y "
+        self._client = Metasploit(user="msf", password="msf")
 
     # ------------------------------------------- < INIT FUNCTION > -------------------------------------------
 
@@ -70,7 +70,7 @@ class Scanner:
 
         os.system(cmd)
 
-    def get_port_list(self, ip,):
+    def _get_port_list(self, ip,):
         dir_port_list = self._output_dir + "/" + ip + "-portlist"
         ports = []
         if not os.path.isfile(dir_port_list):
@@ -91,34 +91,35 @@ class Scanner:
     # ------------------------------------------- < PORT DISCOVERY > -------------------------------------------
 
     # Port scanner
-    def port_discovery(self, speed, ip):
+    def _port_discovery(self, speed, ip):
         name_scan = self._output_dir + "/port_discovery-" + ip + ".xml"
         if self._validate_ip(ip):
             print("[INFOS] Running Port Discovery\n")
-            cmd = self.msf_cmd + "db_nmap -sS -T" + str(speed) + " -v " "-oX " + name_scan + " " + ip + '"' + self.msf_end
-            os.system(cmd)
+            cmd = "db_nmap -sS -T" + str(speed) + " -v " "-oX " + name_scan + " " + ip + '"'
+            self._client.send_cmd(cmd)
         else:
             print("[ERROR] IP is not valid : " + str(ip))
         self._get_port(name_scan, ip)
 
     # Port scanner NO PING
-    def port_discovery_passive(self, speed, ip):
+    def _port_discovery_passive(self, speed, ip):
         name_scan = self._output_dir + "/port_discovery_passive-" + ip + ".xml"
         if self._validate_ip(ip):
             print("\n[INFOS] Running Port Discovery no ping\n")
-            cmd = self.msf_cmd + "db_nmap -Pn -T" + str(speed) + " -v -oX " + name_scan + " " + ip + '"' + self.msf_end
-            os.system(cmd)
+            cmd = "db_nmap -Pn -T" + str(speed) + " -v -oX " + name_scan + " " + ip + '"'
+            self._client.send_cmd(cmd)
+
         else:
             print("[ERROR] IP is not valid : " + str(ip))
         self._get_port(name_scan, ip)
 
     # Scan service version UDP
-    def port_dicovery_udp(self, speed, ip):
+    def _port_dicovery_udp(self, speed, ip):
         name_scan = self._output_dir + "/port_discovery_udp-" + ip + ".xml"
         if self._validate_ip(ip):
             print("\n[INFOS] Running Port Discovery udp\n")
-            cmd = self.msf_cmd + "db_nmap -sUV -T" + str(speed) + " -F --version-intensity 0 -v -oX " + name_scan + " " + ip + '"' + self.msf_end
-            os.system(cmd)
+            cmd = "db_nmap -sUV -T" + str(speed) + " -F --version-intensity 0 -v -oX " + name_scan + " " + ip + '"'
+            self._client.send_cmd(cmd)
         else:
             print("[ERROR] IP is not valid : " + str(ip))
 
@@ -127,45 +128,45 @@ class Scanner:
     # ------------------------------------------- < VERSION DISCOVERY > -------------------------------------------
 
     # OS probe scanner
-    def os_discovery(self, speed, ip):
+    def _os_discovery(self, speed, ip):
         if self._validate_ip(ip):
             print("\n[INFOS] Running OS discovery")
-            cmd = self.msf_cmd + "db_nmap -sV -A -O --osscan-guess -T" + str(speed) + " -v " + ip + '"' + self.msf_end
-            os.system(cmd)
+            cmd = "db_nmap -sV -A -O --osscan-guess -T" + str(speed) + " -v " + ip + '"'
+            self._client.send_cmd(cmd)
         else:
             print("[ERROR] IP is not valid : " + str(ip))
 
     # Scan service version TCP
-    def scan_version(self, speed, ip, port):
+    def _scan_version(self, speed, ip, port):
         if self._validate_ip(ip):
             print("\n[INFOS] discover service TCP on : " + port + "\n")
-            cmd = self.msf_cmd + "db_nmap -sS -sV -p" + port + " -T" + str(speed) + " -v " + ip + '"' + self.msf_end
-            os.system(cmd)
+            cmd = "db_nmap -sS -sV -p" + port + " -T" + str(speed) + " -v " + ip + '"'
+            self._client.send_cmd(cmd)
         else:
             print("[ERROR] IP is not valid : " + str(ip))
 
     # Scan service version UDP
-    def scan_version_passive(self, speed, ip, port):
+    def _scan_version_passive(self, speed, ip, port):
         if self._validate_ip(ip):
             print("\n[INFOS] discover service TCP Passive on : " + port + "\n")
-            cmd = self.msf_cmd + "db_nmap -Pn -sV -p" + str(port) + "-T" + str(speed) + " -v " + ip + '"' + self.msf_end
-            os.system(cmd)
+            cmd = "db_nmap -Pn -sV -p" + str(port) + "-T" + str(speed) + " -v " + ip + '"'
+            self._client.send_cmd(cmd)
         else:
             print("[ERROR] IP is not valid : " + str(ip))
 
     # Scan service version UDP
-    def scan_version_udp(self, speed, ip, port):
+    def _scan_version_udp(self, speed, ip, port):
         if self._validate_ip(ip):
             print("\n[INFOS] discover service UDP on : " + port + "\n")
-            cmd = self.msf_cmd + "db_nmap -sUV -p" + str(port) + "-T" + str(speed) + " -v " + ip + '"' + self.msf_end
-            os.system(cmd)
+            cmd = "db_nmap -sUV -p" + str(port) + "-T" + str(speed) + " -v " + ip + '"'
+            self._client.send_cmd(cmd)
         else:
             print("[ERROR] IP is not valid : " + str(ip))
 
     # ------------------------------------------- < VULNERABILTY DISCOVERY > -------------------------------------------
 
     # Vulnerabilities Scanner
-    def vuln_discovery(self, ip, port):
+    def _vuln_discovery(self, ip, port):
         if self._validate_ip(ip):
             cpt = 0
             print("\n[INFOS] Running vulnerabilities scanner\n")
@@ -173,9 +174,52 @@ class Scanner:
             for db in self._db:
                 cpt += 1
                 print("[PROCESS] Processing vuln-scan " + str(cpt) + "/" + str(len(self._db)) + " \n")
-                cmd = self.msf_cmd + "db_nmap --script nmap-vulners,vulscan --script-args vulscandb=" + str(db) + " -sV -p " + port + " " + ip + '"' + self.msf_end
-
-                print(cmd)
-                os.system(cmd)
+                cmd = "db_nmap --script nmap-vulners,vulscan --script-args vulscandb=" + str(db) + " -sV -p " + port + " " + ip + '"'
+                self._client.send_cmd(cmd)
         else:
             print("[ERROR] IP is not valid : " + str(ip))
+
+    # ------------------------------------------- < SMART DISCOVERY > -------------------------------------------
+
+    def port_discovery(self, ip_scan):
+        # Discovery Port
+        self._port_discovery(speed=5, ip=ip_scan)
+        self._port_discovery_passive(speed=5, ip=ip_scan)
+        self._port_dicovery_udp(speed=5, ip=ip_scan)
+
+        # Discover OS
+        self._os_discovery(speed=5, ip=ip_scan)
+
+        # Get list of ports
+        ports = self._get_port_list(ip=ip_scan)
+        # print(ports)
+        return ports
+
+    def service_discovery(self, ip_scan, ports):
+        os.system("clear")
+        print("[PROCESS] Running Service discovery ...")
+
+        # Scan TCP Version
+        cpt = 0
+        for p in ports:
+            cpt += 1
+            print("[PROCESS] scan service TCP : " + str(cpt) + "/" + str(len(ports)))
+            self._scan_version(speed=5, ip=ip_scan, port=p)
+
+            print("[PROCESS] scan service passive TCP : " + str(cpt) + "/" + str(len(ports)))
+            self._scan_version_passive(speed=5, ip=ip_scan, port=p)
+
+            print("[PROCESS] scan service udp : " + str(cpt) + "/" + str(len(ports)))
+            self._scan_version_udp(speed=5, ip=ip_scan, port=p)
+
+    def vuln_discovery(self, ip_scan, port):
+        os.system("clear")
+        print("[PROCESS] Running Vulns discovery ...")
+
+        # Scan vulns
+        cpt = 0
+        for p in port:
+            cpt += 1
+            os.system("clear")
+            print("[PROCESS] scan vulnerabilities : " + str(cpt) + "/" + str(len(port)))
+            self._vuln_discovery(port=p, ip=ip_scan)

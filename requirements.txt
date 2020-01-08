@@ -1,2 +1,3 @@
-OpenVAS-Reporting
+openvas-reporting
 openvas-lib
+pymetasploit3
