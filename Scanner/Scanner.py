@@ -76,7 +76,7 @@ class Scanner:
         if not os.path.isfile(dir_port_list):
             print("[ERROR] Can't get list of port")
         else:
-            print("[INFOS] Get list of scanned hosts")
+            print("[INFOS] Get list of scanned hosts\n")
 
             temp = open(dir_port_list, 'r').read().split('\n')
 
@@ -84,7 +84,8 @@ class Scanner:
                 if x != '' and not ports.__contains__(x):
                     ports.append(str(x))
 
-            print("[SUCESS] list of port completed\n")
+            print(ports)
+            print("\n[SUCESS] list of port completed : \n")
 
         return ports
 

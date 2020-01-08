@@ -11,7 +11,7 @@ class Metasploit:
         self._client.login(user=user, password=password)
 
         if self._client.authenticated:
-            print("[SUCESS] Authentification MSFRPC SUCESS")
+            print("[SUCESS] Authentification MSFRPC SUCESS\n")
         else:
             print("[ERROR] Authentification ERROR !")
         self.console = MsfRpcConsole(self._client, cb=self.read_console)
