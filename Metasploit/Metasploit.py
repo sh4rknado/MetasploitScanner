@@ -15,7 +15,7 @@ class Metasploit:
         else:
             print("[ERROR] Authentification ERROR !")
 
-        self._console = MsfRpcConsole(self._client, cb="read_console")
+        self._console = MsfRpcConsole(self._client, cb=self.read_console)
         self._console_busy = False
         self._console_read = list()
 
