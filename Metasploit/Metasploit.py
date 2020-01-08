@@ -18,6 +18,7 @@ class Metasploit:
         self._console = MsfRpcConsole(self._client, cb=self.read_console)
         self.client_Isbusy = False
         self._console_read = list()
+        self._console_data = None
 
     def read_console(self, console_data):
         self.client_Isbusy = console_data['busy']
@@ -29,8 +30,12 @@ class Metasploit:
             for line in sigdata:
                 if '[+]' in line:
                     self._console_read.append(line)
-
+        self._console_data = console_data
+        print("\n\n")
+        print(self._console_data)
         print(console_data['data'])
+        print("\n\n")
+
 
     def send_cmd(self, cmd):
         if self._client.authenticated and not self.client_Isbusy:
