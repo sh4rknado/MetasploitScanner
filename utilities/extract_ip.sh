@@ -7,5 +7,5 @@ while read line; do
 done < $1 >> ip_list
 
 sed -i '/^$/d' ip_list
-awk '!a[$0]++' >> ip_list2
+sort -u ip_list ip_list2
 mv ip_list2 ip_list
