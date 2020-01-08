@@ -13,7 +13,7 @@ if __name__ == "__main__":
     if args.update:
         scanner.update_db()
 
-    if args.ip:
+    elif args.ip:
         ip = args.ip
 
         # Discovery Port
@@ -24,3 +24,7 @@ if __name__ == "__main__":
 
         # Discovery Vulns
         scanner.vuln_discovery(ip, ports)
+    else:
+        print("Usage : sudo python3.7 MetasploitScanner.py --ip <Your IP>")
+        print("--ip : <Target IP>")
+        print("--update : True (update vulnaribilities db)")
