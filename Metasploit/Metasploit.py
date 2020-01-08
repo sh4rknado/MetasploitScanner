@@ -14,6 +14,7 @@ class Metasploit:
             print("[SUCESS] Authentification MSFRPC SUCESS")
         else:
             print("[ERROR] Authentification ERROR !")
+        self.console = MsfRpcConsole(self._client, cb=self.read_console)
 
         self.client_Isbusy = False
 
@@ -33,17 +34,16 @@ class Metasploit:
         print(console_data['data'])
 
     def send_cmd(self, cmd):
-        console = MsfRpcConsole(self._client, cb=self.read_console)
 
         if self._client.authenticated and not self.client_Isbusy:
-            console.execute(cmd)
+            self.console.execute(cmd)
             time.sleep(5)
         elif self.client_Isbusy:
             print("[WAITING] Client was busy !")
             while self.client_Isbusy:
                 time.sleep(5)
             print("[INFOS] Client Available now !")
-            console.execute(cmd)
+            self.console.execute(cmd)
             time.sleep(5)
         else:
             print("[ERROR] Client Was Not Authentificated !")
