@@ -30,12 +30,13 @@ class Metasploit:
             for line in sigdata:
                 if '[+]' in line:
                     self._console_read.append(line)
-        self._console_data = console_data
-        print("\n\n")
-        print(self._console_data)
-        print("\n\n")
+        # self._console_data = console_data
+        # print("\n\n")
+        # print(self._console_data)
+        # print("\n\n")
+        # print("\n\n")
         print(console_data['data'])
-        print("\n\n")
+
 
 
     def send_cmd(self, cmd):
