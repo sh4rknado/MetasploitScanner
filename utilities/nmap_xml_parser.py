@@ -71,7 +71,7 @@ def get_host_data(root):
                 proto = port.attrib['protocol']
                 port_id = port.attrib['portid']
 
-                print("portID : " + port_id)
+                print(port_id)
 
                 service = port.findall('service')[0].attrib['name']
                 try:
@@ -273,7 +273,8 @@ def main():
             for addr in addrs:
                 print(addr)
         if args.print_all:
-            print_data(data)
+            # print_data(data)
+            h = 0
         if args.filter_by_port:
             print_filtered_port(data, args.filter_by_port)
         if args.print_web_ports:
