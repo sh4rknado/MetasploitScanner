@@ -70,7 +70,7 @@ class Scanner:
 
         os.system(cmd)
 
-    def _get_port_list(self, ip,):
+    def _get_port_list(self, ip):
         dir_port_list = self._output_dir + "/" + ip + "-portlist"
         ports = []
         if not os.path.isfile(dir_port_list):
@@ -92,38 +92,33 @@ class Scanner:
 
     # Port scanner
     def _port_discovery(self, speed, ip):
-        name_scan = self._output_dir + "/port_discovery-" + ip + ".xml"
         if self._validate_ip(ip):
             print("[INFOS] Running Port Discovery\n")
-            cmd = "db_nmap -sS -T" + str(speed) + " -v " "-oX " + name_scan + " " + ip
+            cmd = "db_nmap --save -sS -T" + str(speed) + " -v " + ip
             self._client.send_cmd(cmd)
         else:
             print("[ERROR] IP is not valid : " + str(ip))
-        self._get_port(name_scan, ip)
+        self._get_port("/root/.msf4/local/*.xml", ip)
 
     # Port scanner NO PING
     def _port_discovery_passive(self, speed, ip):
-        name_scan = self._output_dir + "/port_discovery_passive-" + ip + ".xml"
         if self._validate_ip(ip):
             print("\n[INFOS] Running Port Discovery no ping\n")
-            cmd = "db_nmap -Pn -T" + str(speed) + " -v -oX " + name_scan + " " + ip
+            cmd = "db_nmap --save -Pn -T" + str(speed) + " -v " + ip
             self._client.send_cmd(cmd)
-
         else:
             print("[ERROR] IP is not valid : " + str(ip))
-        self._get_port(name_scan, ip)
+        self._get_port("/root/.msf4/local/*.xml", ip)
 
     # Scan service version UDP
     def _port_dicovery_udp(self, speed, ip):
-        name_scan = self._output_dir + "/port_discovery_udp-" + ip + ".xml"
         if self._validate_ip(ip):
             print("\n[INFOS] Running Port Discovery udp\n")
-            cmd = "db_nmap -sUV -T" + str(speed) + " -F --version-intensity 0 -v -oX " + name_scan + " " + ip
+            cmd = "db_nmap --save -sUV -T" + str(speed) + " -F --version-intensity 0 -v " + ip
             self._client.send_cmd(cmd)
         else:
             print("[ERROR] IP is not valid : " + str(ip))
-
-        self._get_port(name_scan, ip)
+        self._get_port("/root/.msf4/local/*.xml", ip)
 
     # ------------------------------------------- < VERSION DISCOVERY > -------------------------------------------
 
