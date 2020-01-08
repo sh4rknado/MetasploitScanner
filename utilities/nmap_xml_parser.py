@@ -69,6 +69,9 @@ def get_host_data(root):
                 
                 proto = port.attrib['protocol']
                 port_id = port.attrib['portid']
+
+                print("portID : " + port_id)
+
                 service = port.findall('service')[0].attrib['name']
                 try:
                     product = port.findall('service')[0].attrib['product']
