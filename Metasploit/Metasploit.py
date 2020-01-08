@@ -30,6 +30,8 @@ class Metasploit:
             for line in sigdata:
                 if '[+]' in line:
                     console_read.append(line)
+                if 'Nmap done' in line:
+                    self.client_Isbusy = False
 
         print(console_data['data'])
 
