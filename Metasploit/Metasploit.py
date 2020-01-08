@@ -33,6 +33,7 @@ class Metasploit:
         self._console_data = console_data
         print("\n\n")
         print(self._console_data)
+        print("\n\n")
         print(console_data['data'])
         print("\n\n")
 
