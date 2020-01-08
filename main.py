@@ -1,6 +1,7 @@
 from Scanner.Scanner import Scanner
 import os
 import argparse
+import time
 
 if __name__ == "__main__":
     scanner = Scanner()
@@ -18,12 +19,15 @@ if __name__ == "__main__":
 
         # Discovery Port
         ports = scanner.port_discovery(ip)
+        time.sleep(5)
 
         # Discovery Services
         scanner.service_discovery(ip, ports)
+        time.sleep(5)
 
         # Discovery Vulns
         scanner.vuln_discovery(ip, ports)
+        time.sleep(5)
     else:
         print("Usage : sudo python3.7 MetasploitScanner.py --ip <Your IP>")
         print("--ip : <Target IP>")
