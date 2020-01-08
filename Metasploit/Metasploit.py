@@ -19,7 +19,6 @@ class Metasploit:
 
     def read_console(self, console_data):
         console_read = list()
-        console_data = None
 
         self.client_Isbusy = console_data['busy']
         # print("Console State : " + str(self._console_busy))
