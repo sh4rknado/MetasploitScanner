@@ -42,9 +42,9 @@ class Metasploit:
             self._console.execute(cmd)
             time.sleep(5)
         elif self.client_Isbusy:
+            print("[WAITING] Client was busy !")
             while self.client_Isbusy:
                 time.sleep(5)
-                print("[WAITING] Client was busy !")
 
             print("[INFOS] Client Available now !")
             self._console.execute(cmd)
