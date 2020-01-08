@@ -1,10 +1,26 @@
 from Scanner.Scanner import Scanner
 import os
+import argparse
 
 if __name__ == "__main__":
     scanner = Scanner()
 
-    # scanner.update_db()
-    ip_scan = "192.168.2.254"
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--update", help="update the database of vulns")
+    parser.add_argument("--ip", help="Set the ip to scanner")
+    args = parser.parse_args()
 
+    if args.update:
+        scanner.update_db()
 
+    if args.ip:
+        ip = args.ip
+
+        # Discovery Port
+        ports = scanner.port_discovery(ip)
+
+        # Discovery Services
+        scanner.service_discovery(ip, ports)
+
+        # Discovery Vulns
+        scanner.vuln_discovery(ip, ports)
