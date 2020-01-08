@@ -95,7 +95,7 @@ class Scanner:
         name_scan = self._output_dir + "/port_discovery-" + ip + ".xml"
         if self._validate_ip(ip):
             print("[INFOS] Running Port Discovery\n")
-            cmd = "db_nmap -sS -T" + str(speed) + " -v " "-oX " + name_scan + " " + ip + '"'
+            cmd = "db_nmap -sS -T" + str(speed) + " -v " "-oX " + name_scan + " " + ip
             self._client.send_cmd(cmd)
         else:
             print("[ERROR] IP is not valid : " + str(ip))
@@ -106,7 +106,7 @@ class Scanner:
         name_scan = self._output_dir + "/port_discovery_passive-" + ip + ".xml"
         if self._validate_ip(ip):
             print("\n[INFOS] Running Port Discovery no ping\n")
-            cmd = "db_nmap -Pn -T" + str(speed) + " -v -oX " + name_scan + " " + ip + '"'
+            cmd = "db_nmap -Pn -T" + str(speed) + " -v -oX " + name_scan + " " + ip
             self._client.send_cmd(cmd)
 
         else:
@@ -118,7 +118,7 @@ class Scanner:
         name_scan = self._output_dir + "/port_discovery_udp-" + ip + ".xml"
         if self._validate_ip(ip):
             print("\n[INFOS] Running Port Discovery udp\n")
-            cmd = "db_nmap -sUV -T" + str(speed) + " -F --version-intensity 0 -v -oX " + name_scan + " " + ip + '"'
+            cmd = "db_nmap -sUV -T" + str(speed) + " -F --version-intensity 0 -v -oX " + name_scan + " " + ip
             self._client.send_cmd(cmd)
         else:
             print("[ERROR] IP is not valid : " + str(ip))
@@ -131,7 +131,7 @@ class Scanner:
     def _os_discovery(self, speed, ip):
         if self._validate_ip(ip):
             print("\n[INFOS] Running OS discovery")
-            cmd = "db_nmap -sV -A -O --osscan-guess -T" + str(speed) + " -v " + ip + '"'
+            cmd = "db_nmap -sV -A -O --osscan-guess -T" + str(speed) + " -v " + ip
             self._client.send_cmd(cmd)
         else:
             print("[ERROR] IP is not valid : " + str(ip))
@@ -140,7 +140,7 @@ class Scanner:
     def _scan_version(self, speed, ip, port):
         if self._validate_ip(ip):
             print("\n[INFOS] discover service TCP on : " + port + "\n")
-            cmd = "db_nmap -sS -sV -p" + port + " -T" + str(speed) + " -v " + ip + '"'
+            cmd = "db_nmap -sS -sV -p" + port + " -T" + str(speed) + " -v " + ip
             self._client.send_cmd(cmd)
         else:
             print("[ERROR] IP is not valid : " + str(ip))
@@ -149,7 +149,7 @@ class Scanner:
     def _scan_version_passive(self, speed, ip, port):
         if self._validate_ip(ip):
             print("\n[INFOS] discover service TCP Passive on : " + port + "\n")
-            cmd = "db_nmap -Pn -sV -p" + str(port) + "-T" + str(speed) + " -v " + ip + '"'
+            cmd = "db_nmap -Pn -sV -p" + str(port) + "-T" + str(speed) + " -v " + ip
             self._client.send_cmd(cmd)
         else:
             print("[ERROR] IP is not valid : " + str(ip))
@@ -158,7 +158,7 @@ class Scanner:
     def _scan_version_udp(self, speed, ip, port):
         if self._validate_ip(ip):
             print("\n[INFOS] discover service UDP on : " + port + "\n")
-            cmd = "db_nmap -sUV -p" + str(port) + "-T" + str(speed) + " -v " + ip + '"'
+            cmd = "db_nmap -sUV -p" + str(port) + "-T" + str(speed) + " -v " + ip
             self._client.send_cmd(cmd)
         else:
             print("[ERROR] IP is not valid : " + str(ip))
@@ -174,7 +174,7 @@ class Scanner:
             for db in self._db:
                 cpt += 1
                 print("[PROCESS] Processing vuln-scan " + str(cpt) + "/" + str(len(self._db)) + " \n")
-                cmd = "db_nmap --script nmap-vulners,vulscan --script-args vulscandb=" + str(db) + " -sV -p " + port + " " + ip + '"'
+                cmd = "db_nmap --script nmap-vulners,vulscan --script-args vulscandb=" + str(db) + " -sV -p " + port + " " + ip
                 self._client.send_cmd(cmd)
         else:
             print("[ERROR] IP is not valid : " + str(ip))

@@ -14,6 +14,8 @@ class Metasploit:
 
     def send_cmd(self, cmd):
         if self._client.authenticated:
+            print(self._console_id)
+            print(cmd)
             self._client.call('console.write', [self._console_id, cmd])
         else:
             print("Client Was Not Authentificated !")
