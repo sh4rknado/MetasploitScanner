@@ -33,7 +33,7 @@ class Metasploit:
                     console_read.append(line)
 
         if 'Nmap done' in console_data['data']:
-            print("[INFOS] SCAN FINISHED !")
+            # print("[INFOS] SCAN FINISHED !")
             self.client_Isbusy = False
 
         print(console_data['data'])
@@ -49,7 +49,7 @@ class Metasploit:
 
             while self.client_Isbusy:
                 print("[WAITING] Client was busy !")
-                time.sleep(10)
+                time.sleep(5)
 
                 if (self._time - time.time()) > 220:
                     self.client_Isbusy = False
