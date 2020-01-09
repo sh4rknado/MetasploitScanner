@@ -12,6 +12,7 @@ class Scanner:
         self._output_dir = os.getcwd() + "/output"
         self._NmapParser = os.getcwd() + "/utilities"
         self._client = Metasploit(user="msf", password="zerocool")
+        self.scan_IsBusy = False
 
     # ------------------------------------------- < INIT FUNCTION > -------------------------------------------
 
@@ -181,6 +182,7 @@ class Scanner:
     # ------------------------------------------- < SMART DISCOVERY > -------------------------------------------
 
     def port_discovery(self, ip_scan):
+        self.scan_IsBusy = True
         # Discovery Port
         self._port_discovery(speed=5, ip=ip_scan)
         self._port_discovery_passive(speed=5, ip=ip_scan)
@@ -192,9 +194,11 @@ class Scanner:
         # Get list of ports
         ports = self._get_port_list(ip=ip_scan)
         # print(ports)
+        self.scan_IsBusy = False
         return ports
 
     def service_discovery(self, ip_scan, ports):
+        self.scan_IsBusy = True
         os.system("clear")
         print("[PROCESS] Running Service discovery ...")
 
@@ -211,7 +215,10 @@ class Scanner:
             print("[PROCESS] scan service udp : " + str(cpt) + "/" + str(len(ports)))
             self._scan_version_udp(speed=5, ip=ip_scan, port=p)
 
+        self.scan_IsBusy = False
+
     def vuln_discovery(self, ip_scan, port):
+        self.scan_IsBusy = True
         os.system("clear")
         print("[PROCESS] Running Vulns discovery ...")
 
@@ -222,3 +229,5 @@ class Scanner:
             os.system("clear")
             print("[PROCESS] scan vulnerabilities : " + str(cpt) + "/" + str(len(port)))
             self._vuln_discovery(port=p, ip=ip_scan)
+
+        self.scan_IsBusy = False

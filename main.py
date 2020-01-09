@@ -19,15 +19,21 @@ if __name__ == "__main__":
 
         # Discovery Port
         ports = scanner.port_discovery(ip)
-        time.sleep(60)
+
+        while scanner.scan_IsBusy:
+            time.sleep(5)
 
         # Discovery Services
         scanner.service_discovery(ip, ports)
-        time.sleep(60)
+
+        while scanner.scan_IsBusy:
+            time.sleep(5)
 
         # Discovery Vulns
         scanner.vuln_discovery(ip, ports)
-        time.sleep(60)
+
+        while scanner.scan_IsBusy:
+            time.sleep(5)
 
         scanner.logout()
         print("----------------------------------")
