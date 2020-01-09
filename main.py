@@ -19,10 +19,14 @@ if __name__ == "__main__":
     elif args.ip:
         ip = args.ip
 
-        # Discovery Port
-        ports = scanner.port_discovery(ip)
+        ports = scanner.get_ports(ip)
 
         if args.type == "discovery":
+
+            # Discovery Port
+            scanner.port_discovery(ip)
+
+            ports = scanner.get_ports(ip)
 
             while scanner.scan_IsBusy:
                 print("[INFOS] WAIT SCAN FINISHED ! ")
@@ -34,6 +38,7 @@ if __name__ == "__main__":
             while scanner.scan_IsBusy:
                 print("[INFOS] WAIT SCAN FINISHED ! ")
                 time.sleep(5)
+
         if args.type == "vulnerability":
             # Discovery Vulns
             scanner.vuln_discovery(ip, ports)

@@ -191,6 +191,7 @@ class Scanner:
         # Discover OS
         self._os_discovery(speed=5, ip=ip_scan)
 
+    def get_ports(self, ip_scan):
         # Get list of ports
         ports = self._get_port_list(ip=ip_scan)
         # print(ports)
