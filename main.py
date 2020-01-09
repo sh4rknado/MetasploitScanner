@@ -21,18 +21,21 @@ if __name__ == "__main__":
         ports = scanner.port_discovery(ip)
 
         while scanner.scan_IsBusy:
+            print("[INFOS] WAIT SCAN FINISHED ! ")
             time.sleep(5)
 
         # Discovery Services
         scanner.service_discovery(ip, ports)
 
         while scanner.scan_IsBusy:
+            print("[INFOS] WAIT SCAN FINISHED ! ")
             time.sleep(5)
 
         # Discovery Vulns
         scanner.vuln_discovery(ip, ports)
 
         while scanner.scan_IsBusy:
+            print("[INFOS] WAIT SCAN FINISHED ! ")
             time.sleep(5)
 
         scanner.logout()
