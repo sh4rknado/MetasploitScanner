@@ -9,6 +9,8 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--update", help="update the database of vulns")
     parser.add_argument("--ip", help="Set the ip to scanner")
+    parser.add_argument("--type", help="Type of scanner")
+
     args = parser.parse_args()
 
     if args.update:
@@ -20,23 +22,25 @@ if __name__ == "__main__":
         # Discovery Port
         ports = scanner.port_discovery(ip)
 
-        while scanner.scan_IsBusy:
-            print("[INFOS] WAIT SCAN FINISHED ! ")
-            time.sleep(5)
+        if args.type == "discovery":
 
-        # Discovery Services
-        scanner.service_discovery(ip, ports)
+            while scanner.scan_IsBusy:
+                print("[INFOS] WAIT SCAN FINISHED ! ")
+                time.sleep(5)
 
-        while scanner.scan_IsBusy:
-            print("[INFOS] WAIT SCAN FINISHED ! ")
-            time.sleep(5)
+            # Discovery Services
+            scanner.service_discovery(ip, ports)
 
-        # Discovery Vulns
-        scanner.vuln_discovery(ip, ports)
+            while scanner.scan_IsBusy:
+                print("[INFOS] WAIT SCAN FINISHED ! ")
+                time.sleep(5)
+        if args.type == "vulnerability":
+            # Discovery Vulns
+            scanner.vuln_discovery(ip, ports)
 
-        while scanner.scan_IsBusy:
-            print("[INFOS] WAIT SCAN FINISHED ! ")
-            time.sleep(5)
+            while scanner.scan_IsBusy:
+                print("[INFOS] WAIT SCAN FINISHED ! ")
+                time.sleep(5)
 
         scanner.logout()
         print("----------------------------------")
@@ -49,3 +53,5 @@ if __name__ == "__main__":
         print("Usage : sudo python3.7 MetasploitScanner.py --ip <Your IP>")
         print("--ip : <Target IP>")
         print("--update : True (update vulnaribilities db)")
+        print("--type : discovery / vulnerability (update vulnaribilities db)")
+
