@@ -39,14 +39,15 @@ class Metasploit:
 
         if self._client.authenticated and not self.client_Isbusy:
             self.console.execute(cmd)
-            time.sleep(5)
+            time.sleep(2)
         elif self.client_Isbusy:
             print("[WAITING] Client was busy !")
             while self.client_Isbusy:
-                time.sleep(5)
+                print("[WAITING] Client was busy !")
+                time.sleep(2)
             print("[INFOS] Client Available now !")
             self.console.execute(cmd)
-            time.sleep(5)
+            time.sleep(2)
         else:
             print("[ERROR] Client Was Not Authentificated !")
 
