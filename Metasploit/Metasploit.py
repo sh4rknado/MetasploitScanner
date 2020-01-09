@@ -17,6 +17,7 @@ class Metasploit:
         self.console = MsfRpcConsole(self._client, cb=self.read_console)
 
         self.client_Isbusy = False
+        self._time = time.time()
 
     def read_console(self, console_data):
         console_read = list()
@@ -38,15 +39,20 @@ class Metasploit:
         print(console_data['data'])
 
     def send_cmd(self, cmd):
-
         if self._client.authenticated and not self.client_Isbusy:
             self.console.execute(cmd)
             time.sleep(1)
         elif self.client_Isbusy:
             print("[WAITING] Client was busy !")
+
             while self.client_Isbusy:
                 print("[WAITING] Client was busy !")
                 time.sleep(10)
+
+                if (self._time - time.time()) > 220:
+                    print("[INFOS] Timeout")
+                    continue
+
             print("[INFOS] Client Available now !")
             self.console.execute(cmd)
             time.sleep(1)
