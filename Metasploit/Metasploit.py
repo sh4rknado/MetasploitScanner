@@ -39,6 +39,8 @@ class Metasploit:
         print(console_data['data'])
 
     def send_cmd(self, cmd):
+        self._time = time.time()
+
         if self._client.authenticated and not self.client_Isbusy:
             self.console.execute(cmd)
             time.sleep(1)
@@ -50,6 +52,7 @@ class Metasploit:
                 time.sleep(10)
 
                 if (self._time - time.time()) > 220:
+                    self.client_Isbusy = False
                     print("[INFOS] Timeout")
                     continue
 
