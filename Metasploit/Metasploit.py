@@ -31,6 +31,7 @@ class Metasploit:
                 if '[+]' in line:
                     console_read.append(line)
                 if 'Nmap done' in line:
+                    print("[INFOS] SCAN FINISHED !")
                     self.client_Isbusy = False
 
         print(console_data['data'])
