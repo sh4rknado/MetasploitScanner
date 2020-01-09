@@ -100,6 +100,10 @@ class Scanner:
         if self._validate_ip(ip):
             print("[INFOS] Running Port Discovery\n")
             cmd = "db_nmap --save -sS -T" + str(speed) + " -v " + ip
+
+            if self._client.client_Isbusy:
+                self._client.wait_client()
+
             self._client.send_cmd(cmd)
         else:
             print("[ERROR] IP is not valid : " + str(ip))
@@ -110,6 +114,10 @@ class Scanner:
         if self._validate_ip(ip):
             print("\n[INFOS] Running Port Discovery no ping\n")
             cmd = "db_nmap --save -Pn -T" + str(speed) + " -v " + ip
+
+            if self._client.client_Isbusy:
+                self._client.wait_client()
+
             self._client.send_cmd(cmd)
         else:
             print("[ERROR] IP is not valid : " + str(ip))
@@ -120,6 +128,10 @@ class Scanner:
         if self._validate_ip(ip):
             print("\n[INFOS] Running Port Discovery udp\n")
             cmd = "db_nmap --save -sUV -T" + str(speed) + " -F --version-intensity 0 -v " + ip
+
+            if self._client.client_Isbusy:
+                self._client.wait_client()
+
             self._client.send_cmd(cmd)
         else:
             print("[ERROR] IP is not valid : " + str(ip))
@@ -132,6 +144,10 @@ class Scanner:
         if self._validate_ip(ip):
             print("\n[INFOS] Running OS discovery")
             cmd = "db_nmap -sV -A -O --osscan-guess -T" + str(speed) + " -v " + ip
+
+            if self._client.client_Isbusy:
+                self._client.wait_client()
+
             self._client.send_cmd(cmd)
         else:
             print("[ERROR] IP is not valid : " + str(ip))
@@ -141,6 +157,10 @@ class Scanner:
         if self._validate_ip(ip):
             print("\n[INFOS] discover service TCP on : " + port + "\n")
             cmd = "db_nmap -sS -sV -p" + port + " -T" + str(speed) + " -v " + ip
+
+            if self._client.client_Isbusy:
+                self._client.wait_client()
+
             self._client.send_cmd(cmd)
         else:
             print("[ERROR] IP is not valid : " + str(ip))
@@ -150,6 +170,10 @@ class Scanner:
         if self._validate_ip(ip):
             print("\n[INFOS] discover service TCP Passive on : " + port + "\n")
             cmd = "db_nmap -Pn -sV -p" + str(port) + "-T" + str(speed) + " -v " + ip
+
+            if self._client.client_Isbusy:
+                self._client.wait_client()
+
             self._client.send_cmd(cmd)
         else:
             print("[ERROR] IP is not valid : " + str(ip))
@@ -159,6 +183,10 @@ class Scanner:
         if self._validate_ip(ip):
             print("\n[INFOS] discover service UDP on : " + port + "\n")
             cmd = "db_nmap -sUV -p" + str(port) + "-T" + str(speed) + " -v " + ip
+
+            if self._client.client_Isbusy:
+                self._client.wait_client()
+
             self._client.send_cmd(cmd)
         else:
             print("[ERROR] IP is not valid : " + str(ip))
@@ -175,6 +203,10 @@ class Scanner:
                 cpt += 1
                 print("[PROCESS] Processing vuln-scan on " + port + " with " + db + " :" + str(cpt) + "/" + str(len(self._db)) + " \n")
                 cmd = "db_nmap --script nmap-vulners,vulscan --script-args vulscandb=" + str(db) + " -sV -p " + port + " " + ip
+
+                if self._client.client_Isbusy:
+                    self._client.wait_client()
+
                 self._client.send_cmd(cmd)
         else:
             print("[ERROR] IP is not valid : " + str(ip))
@@ -183,6 +215,7 @@ class Scanner:
 
     def port_discovery(self, ip_scan):
         self.scan_IsBusy = True
+
         # Discovery Port
         self._port_discovery(speed=5, ip=ip_scan)
         self._port_discovery_passive(speed=5, ip=ip_scan)
