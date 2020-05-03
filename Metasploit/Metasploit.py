@@ -40,15 +40,12 @@ class Metasploit:
 
     def wait_client(self):
         while self.client_Isbusy:
-            print("[WAITING] Client was busy !")
             time.sleep(5)
 
             if (self._time - time.time()) > 220:
                 self.client_Isbusy = False
                 print("[INFOS] Timeout")
                 continue
-
-        print("[INFOS] Client Available now !")
 
     def send_cmd(self, cmd):
         self._time = time.time()

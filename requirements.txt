@@ -1,3 +1,4 @@
 openvas-reporting
 openvas-lib
 pymetasploit3
+urllib3
