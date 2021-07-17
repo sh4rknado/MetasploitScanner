@@ -5,12 +5,10 @@ import time
 
 if __name__ == "__main__":
     scanner = Scanner()
-
     parser = argparse.ArgumentParser()
     parser.add_argument("--update", help="update the database of vulns")
     parser.add_argument("--ip", help="Set the ip to scanner")
     parser.add_argument("--type", help="Type of scanner")
-
     args = parser.parse_args()
 
     if args.update:
@@ -20,6 +18,7 @@ if __name__ == "__main__":
         ip = args.ip
 
         ports = scanner.get_ports(ip)
+        print("[INFOS] Port Available(s) : ", str(ports))
 
         if args.type == "discovery":
 
