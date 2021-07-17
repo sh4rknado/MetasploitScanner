@@ -105,6 +105,7 @@ class Scanner:
                 self._client.wait_client()
 
             self._client.send_cmd(cmd)
+            print("[INFOS] Port Discovery Running...\n")
         else:
             print("[ERROR] IP is not valid : " + str(ip))
         self._get_port("/root/.msf4/local/*.xml", ip)
