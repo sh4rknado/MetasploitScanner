@@ -10,7 +10,11 @@ __maintainer__ = "Jordan BERTIEAUX"
 __email__ = "jordan.bertieaux@std.heh.be"
 __status__ = "Production"
 
-from Controller.Controller import Controller
 
-if __name__ == "__main__":
-    controller = Controller()
+# ===========================================================================
+#         Definition of Class Subject
+# ===========================================================================
+class Subject:
+
+    def update(self, level, message):
+        pass

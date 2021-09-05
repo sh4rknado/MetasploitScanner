@@ -14,8 +14,6 @@ echo -e "\nupdating vulnerabilites databases\n"
 chmod -v +x updateFiles.sh
 bash updateFiles.sh
 
-# shellcheck disable=SC2012
-# shellcheck disable=SC2035
 echo -e "\nSaving the DataBase\n"
 cd /usr/share/nmap/scripts/vulscan/
 ls -l *.csv | awk '{ print $9 }' > "$curent_path"/data/db_scan

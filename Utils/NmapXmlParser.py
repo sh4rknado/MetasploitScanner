@@ -15,7 +15,6 @@ import os
 import csv
 import argparse
 from collections import Counter
-from time import sleep
 
 
 def get_host_data(root):

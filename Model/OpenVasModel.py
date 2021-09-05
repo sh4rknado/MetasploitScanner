@@ -10,7 +10,10 @@ __maintainer__ = "Jordan BERTIEAUX"
 __email__ = "jordan.bertieaux@std.heh.be"
 __status__ = "Production"
 
-from Controller.Controller import Controller
+from Model.Scanner import Scanner
 
-if __name__ == "__main__":
-    controller = Controller()
+
+class OpenVasModel(Scanner):
+
+    def __init__(self, metasploitClient):
+        Scanner.__init__(self, metasploitClient)

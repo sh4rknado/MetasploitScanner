@@ -1,17 +1,29 @@
+# !/usr/bin/env python33
+# -*- coding: utf-8 -*-
+
+__author__ = "Jordan BERTIEAUX"
+__copyright__ = "Copyright 2021, Metasploit Framework"
+__credits__ = ["Jordan BERTIEAUX"]
+__license__ = "GPL"
+__version__ = "1.0"
+__maintainer__ = "Jordan BERTIEAUX"
+__email__ = "jordan.bertieaux@std.heh.be"
+__status__ = "Production"
+
 import os
-import socket
-from Metasploit.Metasploit import Metasploit
+from Model.Scanner import Scanner
 
 
-class Scanner:
+class ScannerNmap(Scanner):
 
-    def __init__(self):
-        self._speed = 3
+    def __init__(self, speed, sudo_pass, metasploitClient, main_observer):
+        Scanner.__init__(self, metasploitClient, main_observer)
+        self._speed = speed
+        self._sudo_password = sudo_pass
         self._db = []
         self._init_db()
-        self._output_dir = os.getcwd() + "/output"
-        self._NmapParser = os.getcwd() + "/utilities"
-        self._client = Metasploit(user="msf", password="zerocool")
+        self._output_dir = os.getcwd() + "/data/output"
+        self._scripts = os.getcwd() + "/data/scripts"
         self.scan_IsBusy = False
 
     # ------------------------------------------- < INIT FUNCTION > -------------------------------------------
@@ -19,7 +31,7 @@ class Scanner:
     # Set scan speed
     def set_speed(self, speed):
         if 0 > speed > 5:
-            print("[ERROR] value scan speed wrong")
+            self.observer.update_observer("error", "value scan speed wrong")
         else:
             self._speed = speed
 
@@ -27,10 +39,10 @@ class Scanner:
     def _init_db(self):
         path = os.getcwd() + "/data/db_scan"
         if not os.path.isfile(path):
-            print("[ERROR] Can't initialize the Vulnerabilities Databases")
+            self.observer.update_observer("error", "Could not initialize the vulnerabilities databases")
             exit(0)
         else:
-            print("[INFOS] Initialize the Vulnerabilities Databases")
+            self.observer.update_observer("infos", "Initialize the vulnerabilities databases")
 
             temp = open(path, 'r').read().split('\n')
 
@@ -38,38 +50,27 @@ class Scanner:
                 if x != '':
                     self._db.append(str(x))
 
-            print("[SUCESS] Initialize db completed\n")
+            self.observer.update_observer("sucess", "Initialize the vulnerabilities databases")
 
-    # Check if IP is Valid
-    def _validate_ip(self, ip):
-        try:
-            socket.inet_aton(ip)
-            check = True
-        except socket.error:
-            check = False
-        return check
+            print("[SUCESS] Initialize db completed\n")
 
     # Update the databaseFile
     def update_db(self):
-        path = os.getcwd() + "/utilities/update.sh"
+        path = self._scripts + "/update.sh"
 
         if not os.path.isfile(path):
-            print("[ERROR] FILE NOT FOUND : " + str(path))
+            print("[ERROR] database could not update reason is File not found : " + str(path))
             exit(0)
         else:
             print("[INFOS] update the db now ...")
-            password = input("What is the sudo password ?")
-            os.system("echo " + password + " | sudo -S bash " + path)
-
-    def logout(self):
-        self._client.logout()
+            os.system(f"echo  {self._sudo_password}  | sudo -S bash {path}")
 
     # ------------------------------------------- < REPORT ANALYSE > -------------------------------------------
 
     def _get_port(self, report, ip):
         dir_port_list = self._output_dir + "/" + ip + "-portlist"
 
-        cmd = "python " + self._NmapParser + "/nmap_xml_parser.py -f " + report + " -pu | sed -e " + "'" \
+        cmd = "python3 " + self._scripts + "/nmap_xml_parser.py -f " + report + " -pu | sed -e " + "'" \
               + "s/[^0-9]/ /g" + "'" + " -e " + "'" + "s/^ *//g" + "'" + " -e " + "'" + "s/ *$//g" + "'" \
               + " | tr -s " + "' " + "'" + " | sed " + "'" + "s/ /" + "\\n" + "/g" + "'" + " >> " + dir_port_list
         os.system(cmd)
@@ -96,99 +97,93 @@ class Scanner:
     # ------------------------------------------- < PORT DISCOVERY > -------------------------------------------
 
     # Port scanner
-    def _port_discovery(self, speed, ip):
-        if self._validate_ip(ip):
+    def _port_discovery(self, ip):
+        if self.validate_ip(ip):
             print("[INFOS] Running Port Discovery\n")
-            cmd = "db_nmap --save -sS -T" + str(speed) + " -v " + ip
 
-            if self._client.client_Isbusy:
-                self._client.wait_client()
+            if self.client.client_Isbusy:
+                self.client.waitclient()
 
-            self._client.send_cmd(cmd)
+            self.client.send_cmd(f"db_nmap --save -sS -T {self._speed} -v {ip}")
             print("[INFOS] Port Discovery Running...\n")
         else:
             print("[ERROR] IP is not valid : " + str(ip))
         self._get_port("/root/.msf4/local/*.xml", ip)
 
     # Port scanner NO PING
-    def _port_discovery_passive(self, speed, ip):
-        if self._validate_ip(ip):
+    def _port_discovery_passive(self, ip):
+        if self.validate_ip(ip):
             print("\n[INFOS] Running Port Discovery no ping\n")
-            cmd = "db_nmap --save -Pn -T" + str(speed) + " -v " + ip
 
-            if self._client.client_Isbusy:
-                self._client.wait_client()
+            if self.client.client_Isbusy:
+                self.client.waitclient()
 
-            self._client.send_cmd(cmd)
+            self.client.send_cmd(f"db_nmap --save -Pn -T {self._speed} -v {ip}")
         else:
-            print("[ERROR] IP is not valid : " + str(ip))
+            print(f"[ERROR] IP is not valid : {ip}")
+
         self._get_port("/root/.msf4/local/*.xml", ip)
 
     # Scan service version UDP
-    def _port_dicovery_udp(self, speed, ip):
-        if self._validate_ip(ip):
+    def _port_dicovery_udp(self, ip):
+        if self.validate_ip(ip):
             print("\n[INFOS] Running Port Discovery udp\n")
-            cmd = "db_nmap --save -sUV -T" + str(speed) + " -F --version-intensity 0 -v " + ip
 
-            if self._client.client_Isbusy:
-                self._client.wait_client()
+            if self.client.client_Isbusy:
+                self.client.waitclient()
 
-            self._client.send_cmd(cmd)
+            self.client.send_cmd(f"db_nmap --save -sUV -T {self._speed} -F --version-intensity 0 -v {ip} ")
         else:
-            print("[ERROR] IP is not valid : " + str(ip))
+            print(f"[ERROR] IP is not valid : {ip}")
         self._get_port("/root/.msf4/local/*.xml", ip)
 
     # ------------------------------------------- < VERSION DISCOVERY > -------------------------------------------
 
     # OS probe scanner
-    def _os_discovery(self, speed, ip):
-        if self._validate_ip(ip):
+    def _os_discovery(self, ip):
+        if self.validate_ip(ip):
             print("\n[INFOS] Running OS discovery")
-            cmd = "db_nmap -sV -A -O --osscan-guess -T" + str(speed) + " -v " + ip
 
-            if self._client.client_Isbusy:
-                self._client.wait_client()
+            if self.client.client_Isbusy:
+                self.client.waitclient()
 
-            self._client.send_cmd(cmd)
+            self.client.send_cmd(f"db_nmap -sV -A -O --osscan-guess -T {self._speed} -v {ip}")
         else:
-            print("[ERROR] IP is not valid : " + str(ip))
+            print(f"[ERROR] IP is not valid : {ip}")
 
     # Scan service version TCP
-    def _scan_version(self, speed, ip, port):
-        if self._validate_ip(ip):
+    def _scan_version(self, ip, port):
+        if self.validate_ip(ip):
             print("\n[INFOS] discover service TCP on : " + port + "\n")
-            cmd = "db_nmap -sS -sV -p" + port + " -T" + str(speed) + " -v " + ip
 
-            if self._client.client_Isbusy:
-                self._client.wait_client()
+            if self.client.client_Isbusy:
+                self.client.waitclient()
 
-            self._client.send_cmd(cmd)
+            self.client.send_cmd(f"db_nmap -sS -sV -p {port} -T {self._speed} -v {ip}")
         else:
-            print("[ERROR] IP is not valid : " + str(ip))
+            print(f"[ERROR] IP is not valid : {ip}")
 
     # Scan service version UDP
-    def _scan_version_passive(self, speed, ip, port):
-        if self._validate_ip(ip):
+    def _scan_version_passive(self, ip, port):
+        if self.validate_ip(ip):
             print("\n[INFOS] discover service TCP Passive on : " + port + "\n")
-            cmd = "db_nmap -Pn -sV -p" + str(port) + "-T" + str(speed) + " -v " + ip
 
-            if self._client.client_Isbusy:
-                self._client.wait_client()
+            if self.client.client_Isbusy:
+                self.client.waitclient()
 
-            self._client.send_cmd(cmd)
+            self.client.send_cmd(f"db_nmap -Pn -sV -p {port} -T {self._speed} -v {ip}")
         else:
-            print("[ERROR] IP is not valid : " + str(ip))
+            print("[ERROR] IP is not valid : {ip}")
 
     # Scan service version UDP
-    def _scan_version_udp(self, speed, ip, port):
-        if self._validate_ip(ip):
+    def _scan_version_udp(self, ip, port):
+        if self.validate_ip(ip):
             print("\n[INFOS] discover service UDP on : " + port + "\n")
-            cmd = "db_nmap -sUV -p" + str(port) + "-T" + str(speed) + " -v " + ip
 
-            if self._client.client_Isbusy:
-                self._client.wait_client()
+            if self.client.client_Isbusy:
+                self.client.waitclient()
 
-            self._client.send_cmd(cmd)
+            self.client.send_cmd(f"db_nmap -sUV -p {port} -T {self._speed} -v {ip}")
         else:
             print("[ERROR] IP is not valid : " + str(ip))
 
@@ -196,21 +191,20 @@ class Scanner:
 
     # Vulnerabilities Scanner
     def _vuln_discovery(self, ip, port):
-        if self._validate_ip(ip):
+        if self.validate_ip(ip):
             cpt = 0
             print("\n[INFOS] Running vulnerabilities scanner\n")
 
             for db in self._db:
                 cpt += 1
-                print("[PROCESS] Processing vuln-scan on " + port + " with " + db + " :" + str(cpt) + "/" + str(len(self._db)) + " \n")
-                cmd = "db_nmap --script nmap-vulners,vulscan --script-args vulscandb=" + str(db) + " -sV -p " + port + " " + ip
+                print(f"[PROCESS] Processing vuln-scan on {port} with {db} : {cpt}/{len(self._db)}  \n")
 
-                if self._client.client_Isbusy:
-                    self._client.wait_client()
+                if self.client.client_Isbusy:
+                    self.client.waitclient()
 
-                self._client.send_cmd(cmd)
+                self.client.send_cmd(f"db_nmap --script nmap-vulners,vulscan --script-args vulscandb={db} -sV -p {port} {ip} ")
         else:
-            print("[ERROR] IP is not valid : " + str(ip))
+            print(f"[ERROR] IP is not valid : {ip}")
 
     # ------------------------------------------- < SMART DISCOVERY > -------------------------------------------
 
@@ -218,16 +212,16 @@ class Scanner:
         self.scan_IsBusy = True
 
         # Discovery Port
-        self._port_discovery(speed=5, ip=ip_scan)
-        self._port_discovery_passive(speed=5, ip=ip_scan)
-        self._port_dicovery_udp(speed=5, ip=ip_scan)
+        self._port_discovery(ip_scan)
+        self._port_discovery_passive(ip_scan)
+        self._port_dicovery_udp(ip_scan)
 
         # Discover OS
-        self._os_discovery(speed=5, ip=ip_scan)
+        self._os_discovery(ip_scan)
 
     def get_ports(self, ip_scan):
         # Get list of ports
-        ports = self._get_port_list(ip=ip_scan)
+        ports = self._get_port_list(ip_scan)
         # print(ports)
         self.scan_IsBusy = False
         return ports
@@ -242,13 +236,13 @@ class Scanner:
         for p in ports:
             cpt += 1
             print("[PROCESS] scan service TCP : " + str(cpt) + "/" + str(len(ports)))
-            self._scan_version(speed=5, ip=ip_scan, port=p)
+            self._scan_version(ip=ip_scan, port=p)
 
             print("[PROCESS] scan service passive TCP : " + str(cpt) + "/" + str(len(ports)))
-            self._scan_version_passive(speed=5, ip=ip_scan, port=p)
+            self._scan_version_passive(ip=ip_scan, port=p)
 
             print("[PROCESS] scan service udp : " + str(cpt) + "/" + str(len(ports)))
-            self._scan_version_udp(speed=5, ip=ip_scan, port=p)
+            self._scan_version_udp(ip=ip_scan, port=p)
 
         self.scan_IsBusy = False
 
