@@ -12,6 +12,7 @@ __status__ = "Production"
 
 import os
 from Model.Scanner import Scanner
+from Utils.Level import Level
 
 
 class ScannerNmap(Scanner):
@@ -31,7 +32,7 @@ class ScannerNmap(Scanner):
     # Set scan speed
     def set_speed(self, speed):
         if 0 > speed > 5:
-            self.observer.update_observer("error", "value scan speed wrong")
+            self.ShowMessage(Level.error, "value scan speed wrong")
         else:
             self._speed = speed
 
@@ -39,10 +40,10 @@ class ScannerNmap(Scanner):
     def _init_db(self):
         path = os.getcwd() + "/data/db_scan"
         if not os.path.isfile(path):
-            self.observer.update_observer("error", "Could not initialize the vulnerabilities databases")
+            self.ShowMessage(Level.error, "Could not initialize the vulnerabilities databases")
             exit(0)
         else:
-            self.observer.update_observer("infos", "Initialize the vulnerabilities databases")
+            self.ShowMessage(Level.info, "Initialize the vulnerabilities databases")
 
             temp = open(path, 'r').read().split('\n')
 
@@ -50,25 +51,23 @@ class ScannerNmap(Scanner):
                 if x != '':
                     self._db.append(str(x))
 
-            self.observer.update_observer("sucess", "Initialize the vulnerabilities databases")
-
-            print("[SUCESS] Initialize db completed\n")
+            self.ShowMessage(Level.success, "Initialization databases completed")
 
     # Update the databaseFile
     def update_db(self):
         path = self._scripts + "/update.sh"
 
         if not os.path.isfile(path):
-            print("[ERROR] database could not update reason is File not found : " + str(path))
+            self.ShowMessage(Level.error, f"database could not update reason is File not found : {path}")
             exit(0)
         else:
-            print("[INFOS] update the db now ...")
+            self.ShowMessage(Level.info, "update the db now ...")
             os.system(f"echo  {self._sudo_password}  | sudo -S bash {path}")
 
     # ------------------------------------------- < REPORT ANALYSE > -------------------------------------------
 
     def _get_port(self, report, ip):
-        dir_port_list = self._output_dir + "/" + ip + "-portlist"
+        dir_port_list = f"{self._output_dir}/{ip}-portlist"
 
         cmd = "python3 " + self._scripts + "/nmap_xml_parser.py -f " + report + " -pu | sed -e " + "'" \
               + "s/[^0-9]/ /g" + "'" + " -e " + "'" + "s/^ *//g" + "'" + " -e " + "'" + "s/ *$//g" + "'" \
@@ -76,21 +75,18 @@ class ScannerNmap(Scanner):
         os.system(cmd)
 
     def _get_port_list(self, ip):
-        dir_port_list = self._output_dir + "/" + ip + "-portlist"
+        dir_port_list = f"{self._output_dir}/{ip}-portlist"
         ports = []
         if not os.path.isfile(dir_port_list):
-            print("[ERROR] Can't get list of port")
+            self.ShowMessage(Level.error, f"port list not found : {dir_port_list}")
         else:
-            print("[INFOS] Get list of scanned hosts\n")
-
+            self.ShowMessage(Level.info, "Get list of scanned hosts\n")
             temp = open(dir_port_list, 'r').read().split('\n')
 
             for x in temp:
                 if x != '' and not ports.__contains__(x):
                     ports.append(str(x))
-
-            print(ports)
-            print("\n[SUCESS] list of port completed : \n")
+            self.ShowMessage(Level.success, f"enumerate port completed : \n{ports}\n")
 
         return ports
 
@@ -99,42 +95,43 @@ class ScannerNmap(Scanner):
     # Port scanner
     def _port_discovery(self, ip):
         if self.validate_ip(ip):
-            print("[INFOS] Running Port Discovery\n")
 
             if self.client.client_Isbusy:
                 self.client.waitclient()
 
+            self.ShowMessage(Level.info, "Port discovery starting...")
             self.client.send_cmd(f"db_nmap --save -sS -T {self._speed} -v {ip}")
-            print("[INFOS] Port Discovery Running...\n")
         else:
-            print("[ERROR] IP is not valid : " + str(ip))
+            self.ShowMessage(Level.error, f"not ip valid : {ip}")
+
         self._get_port("/root/.msf4/local/*.xml", ip)
 
     # Port scanner NO PING
     def _port_discovery_passive(self, ip):
         if self.validate_ip(ip):
-            print("\n[INFOS] Running Port Discovery no ping\n")
 
             if self.client.client_Isbusy:
                 self.client.waitclient()
 
+            self.ShowMessage(Level.info, "starting passive port discovery (no ping)...")
             self.client.send_cmd(f"db_nmap --save -Pn -T {self._speed} -v {ip}")
         else:
-            print(f"[ERROR] IP is not valid : {ip}")
+            self.ShowMessage(Level.error, f"ip is not valid {ip}")
 
         self._get_port("/root/.msf4/local/*.xml", ip)
 
     # Scan service version UDP
     def _port_dicovery_udp(self, ip):
         if self.validate_ip(ip):
-            print("\n[INFOS] Running Port Discovery udp\n")
 
             if self.client.client_Isbusy:
                 self.client.waitclient()
 
+            self.ShowMessage(Level.info, "Starting port discovery (udp)")
             self.client.send_cmd(f"db_nmap --save -sUV -T {self._speed} -F --version-intensity 0 -v {ip} ")
         else:
-            print(f"[ERROR] IP is not valid : {ip}")
+            self.ShowMessage(Level.error, f"ip is not valid {ip}")
+
         self._get_port("/root/.msf4/local/*.xml", ip)
 
     # ------------------------------------------- < VERSION DISCOVERY > -------------------------------------------
@@ -142,50 +139,50 @@ class ScannerNmap(Scanner):
     # OS probe scanner
     def _os_discovery(self, ip):
         if self.validate_ip(ip):
-            print("\n[INFOS] Running OS discovery")
 
             if self.client.client_Isbusy:
                 self.client.waitclient()
 
+            self.ShowMessage(Level.info, "Starting os discovery")
             self.client.send_cmd(f"db_nmap -sV -A -O --osscan-guess -T {self._speed} -v {ip}")
         else:
-            print(f"[ERROR] IP is not valid : {ip}")
+            self.ShowMessage(Level.error, f"ip is not valid {ip}")
 
     # Scan service version TCP
     def _scan_version(self, ip, port):
         if self.validate_ip(ip):
-            print("\n[INFOS] discover service TCP on : " + port + "\n")
 
             if self.client.client_Isbusy:
                 self.client.waitclient()
 
+            self.ShowMessage(Level.info, f"starting service discover  on {port}")
             self.client.send_cmd(f"db_nmap -sS -sV -p {port} -T {self._speed} -v {ip}")
         else:
-            print(f"[ERROR] IP is not valid : {ip}")
+            self.ShowMessage(Level.error, "IP is not valid : {ip}")
 
     # Scan service version UDP
     def _scan_version_passive(self, ip, port):
         if self.validate_ip(ip):
-            print("\n[INFOS] discover service TCP Passive on : " + port + "\n")
 
             if self.client.client_Isbusy:
                 self.client.waitclient()
 
+            self.ShowMessage(Level.info, f"starting passive service (udp) discover on {port}")
             self.client.send_cmd(f"db_nmap -Pn -sV -p {port} -T {self._speed} -v {ip}")
         else:
-            print("[ERROR] IP is not valid : {ip}")
+            self.ShowMessage(Level.error, f"ip is not valid {ip}")
 
     # Scan service version UDP
     def _scan_version_udp(self, ip, port):
         if self.validate_ip(ip):
-            print("\n[INFOS] discover service UDP on : " + port + "\n")
 
             if self.client.client_Isbusy:
                 self.client.waitclient()
 
+            self.ShowMessage(Level.info, f"discover service (udp) on {port}")
             self.client.send_cmd(f"db_nmap -sUV -p {port} -T {self._speed} -v {ip}")
         else:
-            print("[ERROR] IP is not valid : " + str(ip))
+            self.ShowMessage(Level.error, f"ip is not valid {ip}")
 
     # ------------------------------------------- < VULNERABILTY DISCOVERY > -------------------------------------------
 
@@ -193,18 +190,18 @@ class ScannerNmap(Scanner):
     def _vuln_discovery(self, ip, port):
         if self.validate_ip(ip):
             cpt = 0
-            print("\n[INFOS] Running vulnerabilities scanner\n")
+            self.ShowMessage(Level.info, "Starting vulnerabilities scanner...")
 
             for db in self._db:
-                cpt += 1
-                print(f"[PROCESS] Processing vuln-scan on {port} with {db} : {cpt}/{len(self._db)}  \n")
 
                 if self.client.client_Isbusy:
                     self.client.waitclient()
 
+                cpt += 1
+                self.ShowMessage(Level.info, "Processing vuln-scan on {port} with {db} : {cpt}/{len(self._db)}")
                 self.client.send_cmd(f"db_nmap --script nmap-vulners,vulscan --script-args vulscandb={db} -sV -p {port} {ip} ")
         else:
-            print(f"[ERROR] IP is not valid : {ip}")
+            self.ShowMessage(Level.error, f"ip is not valid {ip}")
 
     # ------------------------------------------- < SMART DISCOVERY > -------------------------------------------
 
@@ -220,28 +217,26 @@ class ScannerNmap(Scanner):
         self._os_discovery(ip_scan)
 
     def get_ports(self, ip_scan):
-        # Get list of ports
         ports = self._get_port_list(ip_scan)
-        # print(ports)
         self.scan_IsBusy = False
         return ports
 
     def service_discovery(self, ip_scan, ports):
         self.scan_IsBusy = True
         os.system("clear")
-        print("[PROCESS] Running Service discovery ...")
+        self.ShowMessage(Level.info, "starting discovery service...")
 
         # Scan TCP Version
         cpt = 0
         for p in ports:
             cpt += 1
-            print("[PROCESS] scan service TCP : " + str(cpt) + "/" + str(len(ports)))
+            self.ShowMessage(Level.info, f"[PROCESS] scan service TCP : {cpt}/{len(ports)}")
             self._scan_version(ip=ip_scan, port=p)
 
-            print("[PROCESS] scan service passive TCP : " + str(cpt) + "/" + str(len(ports)))
+            self.ShowMessage(Level.info, f"[PROCESS] discovery service (passive TCP) : {cpt}/{len(ports)}")
             self._scan_version_passive(ip=ip_scan, port=p)
 
-            print("[PROCESS] scan service udp : " + str(cpt) + "/" + str(len(ports)))
+            self.ShowMessage(Level.info, f"[PROCESS] discovery service (UDP) : {cpt}/{len(ports)}")
             self._scan_version_udp(ip=ip_scan, port=p)
 
         self.scan_IsBusy = False
@@ -249,14 +244,14 @@ class ScannerNmap(Scanner):
     def vuln_discovery(self, ip_scan, port):
         self.scan_IsBusy = True
         os.system("clear")
-        print("[PROCESS] Running Vulns discovery ...")
+        self.ShowMessage(Level.info, "Running Vulns discovery...")
 
         # Scan vulns
         cpt = 0
         for p in port:
             cpt += 1
             os.system("clear")
-            print("[PROCESS] scan vulnerabilities : " + str(cpt) + "/" + str(len(port)))
+            self.ShowMessage(Level.info, f"[PROCESS] scan vulnerabilities {cpt}/{len(port)}...")
             self._vuln_discovery(port=p, ip=ip_scan)
 
         self.scan_IsBusy = False
