@@ -16,6 +16,7 @@ from DesignPattern.Observer import Observer
 from Utils.ConfigurationParser import ConfigurationParser
 from Model.ScannerNmap import ScannerNmap
 from Model.MetasploitModel import MetasploitModel
+from Utils.Level import Level
 
 
 class Controller(Subject):
@@ -25,13 +26,13 @@ class Controller(Subject):
         self.client, self.scanner = self.GetClients()
 
     def update(self, level, message):
-        if level == "infos":
+        if level == Level.info:
             self._ui.ShowInfos(f"[INFOS] {message}")
-        elif level == "sucess":
+        elif level == Level.success:
             self._ui.ShowSuccess(f"[SUCCESS] {message}")
-        elif level == "warning":
+        elif level == Level.warning:
             self._ui.ShowWarning(f"[WARNING] {message}")
-        elif level == "error":
+        elif level == Level.error:
             self._ui.ShowError(f"[ERROR] {message}")
 
     def GetClients(self):
@@ -40,6 +41,11 @@ class Controller(Subject):
         speed, sudo_password = config.GetConfigurationScanner()
 
         client = MetasploitModel(username,password, port, self)
-        scanner = ScannerNmap(speed, sudo_password, client)
+        scanner = ScannerNmap(speed, sudo_password, client, self)
 
         return client, scanner
+
+    def GetPort(self):
+        ports = self.scanner.port_discovery("127.0.0.1")
+        toto = ""
+

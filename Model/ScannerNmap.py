@@ -13,6 +13,7 @@ __status__ = "Production"
 import os
 from Model.Scanner import Scanner
 from Utils.Level import Level
+from nmap.nmap import PortScanner
 
 
 class ScannerNmap(Scanner):
@@ -72,7 +73,7 @@ class ScannerNmap(Scanner):
         cmd = "python3 " + self._scripts + "/nmap_xml_parser.py -f " + report + " -pu | sed -e " + "'" \
               + "s/[^0-9]/ /g" + "'" + " -e " + "'" + "s/^ *//g" + "'" + " -e " + "'" + "s/ *$//g" + "'" \
               + " | tr -s " + "' " + "'" + " | sed " + "'" + "s/ /" + "\\n" + "/g" + "'" + " >> " + dir_port_list
-        os.system(cmd)
+        return os.system(cmd)
 
     def _get_port_list(self, ip):
         dir_port_list = f"{self._output_dir}/{ip}-portlist"
@@ -104,7 +105,8 @@ class ScannerNmap(Scanner):
         else:
             self.ShowMessage(Level.error, f"not ip valid : {ip}")
 
-        self._get_port("/root/.msf4/local/*.xml", ip)
+        test = self._get_port("/root/.msf4/local/*.xml", ip)
+        toto = ""
 
     # Port scanner NO PING
     def _port_discovery_passive(self, ip):

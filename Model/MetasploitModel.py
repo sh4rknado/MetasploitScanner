@@ -40,6 +40,9 @@ class MetasploitModel:
             self.ShowMessage(Level.error, "Authentication failed !")
 
         self.console = MsfRpcConsole(self._client, cb=self.read_console)
+
+        print(self._client.db.connect(username="msf", database="msf", host="127.0.0.1"))
+        print(self._client.db.status)
         self.client_Isbusy = False
 
     def read_console(self, console_data):
