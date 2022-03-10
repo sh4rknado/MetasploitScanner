@@ -23,7 +23,7 @@ class Controller(Subject):
 
     def __init__(self):
         self._ui = Console()
-        self.client, self.scanner = self.GetClients()
+        self.client, self.scanner = self.get_client()
 
     def update(self, level, message):
         if level == Level.info:
@@ -35,17 +35,15 @@ class Controller(Subject):
         elif level == Level.error:
             self._ui.ShowError(f"[ERROR] {message}")
 
-    def GetClients(self):
+    def get_client(self):
         config = ConfigurationParser("data/configuration.ini")
-        username, password, ip, port = config.GetConfigurationMetasploit()
         speed, sudo_password = config.GetConfigurationScanner()
-
-        client = MetasploitModel(username,password, port, self)
+        client = config.get_metasploit_client(self)
         scanner = ScannerNmap(speed, sudo_password, client, self)
 
         return client, scanner
 
-    def GetPort(self):
-        ports = self.scanner.port_discovery("127.0.0.1")
+    def get_port(self, ip):
+        ports = self.scanner.port_discovery(ip)
         toto = ""
 

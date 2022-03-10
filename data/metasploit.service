@@ -1,0 +1,13 @@
+[Unit]
+Description=MetasploitRPC service
+After=network.target
+
+[Service]
+Type=simple
+Restart=always
+RestartSec=1
+User=root
+ExecStart=/usr/bin/msfrpcd -f -U zerocool -P zerocool -p 55553 -n -a 0.0.0.0 
+
+[Install]
+WantedBy=multi-user.target

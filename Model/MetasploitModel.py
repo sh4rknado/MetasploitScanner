@@ -21,14 +21,15 @@ import time
 
 class MetasploitModel:
 
-    def __init__(self, user, password, port, main_observer):
+    def __init__(self, user, password, port, db_user, db_name, db_ip, db_port, main_observer):
         # Observer Pattern
+        self._time = None
         self._observer = Observer()
         self._observer.register(main_observer)
 
-        if not ProcessManager.checkIfProcessRunning('msfrcpd'):
-            self.ShowMessage(Level.info, "Metasploit start process now...")
-            os.system(f"msfrpcd -U {user} -P {password} -p {port} -n -a 0.0.0.0")
+        if not ProcessManager.service_is_running("metasploit.service"):
+            self.ShowMessage(Level.info, f"Start metasploit service msfrpcd for {user}:{password}@127.0.0.1:{port} ...")
+            os.system(f"systemctl start metasploit.service")
 
         self.ShowMessage(Level.info, f"Metasploit Authentication on {user}:{password}@127.0.0.1:{port}...")
         self._client = MsfRpcClient(password, port=port, username=user, ssl=True)
@@ -41,7 +42,7 @@ class MetasploitModel:
 
         self.console = MsfRpcConsole(self._client, cb=self.read_console)
 
-        print(self._client.db.connect(username="msf", database="msf", host="127.0.0.1"))
+        print(self._client.db.connect(username=db_user, database=db_name, host=db_ip, port=db_port))
         print(self._client.db.status)
         self.client_Isbusy = False
 

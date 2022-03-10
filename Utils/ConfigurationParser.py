@@ -17,16 +17,29 @@ from Model.ScannerNmap import ScannerNmap
 
 class ConfigurationParser:
 
-    def __init__(self, configPath):
+    def __init__(self, config_path):
         self.config = configparser.ConfigParser()
-        self.config.read(configPath)
+        self.config.read(config_path)
 
-    def GetConfigurationMetasploit(self):
-        ip = self.config['Metasploit']['IP']
-        port = self.config['Metasploit']['PORT']
-        username = self.config['Metasploit']['USERNAME']
-        password = self.config['Metasploit']['PASSWORD']
+    def get_metasploit_client(self, main_observer):
+        username, password, ip, port = self._get_configuration_metasploit_service()
+        db_user, db_pass, db_name, db_ip, db_port = self._get_configuration_metasploit_database()
+        return MetasploitModel(username, password, port, db_user, db_name, db_ip, db_port, main_observer)
+
+    def _get_configuration_metasploit_service(self):
+        ip = self.config['MetasploitService']['IP']
+        port = self.config['MetasploitService']['PORT']
+        username = self.config['MetasploitService']['USERNAME']
+        password = self.config['MetasploitService']['PASSWORD']
         return username, password, ip, port
+
+    def _get_configuration_metasploit_database(self):
+        username = self.config['MetasploitDatabase']['USERNAME']
+        password = self.config['MetasploitDatabase']['PASSWORD']
+        database = self.config['MetasploitDatabase']['DATABASE']
+        ip = self.config['MetasploitDatabase']['IP']
+        port = self.config['MetasploitDatabase']['PORT']
+        return username, password, database, ip, port
 
     def GetConfigurationOpenVas(self):
         ip = self.config['OpenVas']['IP']

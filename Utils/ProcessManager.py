@@ -11,6 +11,7 @@ __email__ = "jordan.bertieaux@std.heh.be"
 __status__ = "Production"
 
 import psutil
+import subprocess
 
 
 class ProcessManager:
@@ -25,3 +26,8 @@ class ProcessManager:
             except (psutil.NoSuchProcess, psutil.AccessDenied, psutil.ZombieProcess):
                 pass
         return False
+
+    @staticmethod
+    def service_is_running(service):
+        status = subprocess.call(["systemctl", "is-active", "--quiet", service])
+        return status == 0

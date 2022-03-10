@@ -14,5 +14,4 @@ from Controller.Controller import Controller
 
 if __name__ == "__main__":
     controller = Controller()
-    controller.GetPort()
-
+    controller.get_port("192.168.2.254")
