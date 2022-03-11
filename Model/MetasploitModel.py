@@ -21,12 +21,23 @@ import time
 
 class MetasploitModel:
 
-    def __init__(self, user, password, port, db_user, db_name, db_ip, db_port, main_observer):
+    def __init__(self, user, password, port, db_user, db_name, db_ip, db_port, db_pass, main_observer):
         # Observer Pattern
         self._time = None
         self._observer = Observer()
         self._observer.register(main_observer)
 
+        # Metasploit component
+        self._auth_client(user, password, port)
+        self.console = MsfRpcConsole(self._client, cb=self.read_console)
+        self._auth_database(db_user, db_name, db_ip, db_port, db_pass)
+        self.client_Isbusy = False
+
+    def _auth_database(self, db_user, db_name, db_ip, db_port, db_pass):
+        print(self._client.db.connect(username=db_user, database=db_name, host=db_ip, port=db_port, password=db_pass))
+        print(self._client.db.status)
+
+    def _auth_client(self, user, password, port):
         if not ProcessManager.service_is_running("metasploit.service"):
             self.ShowMessage(Level.info, f"Start metasploit service msfrpcd for {user}:{password}@127.0.0.1:{port} ...")
             os.system(f"systemctl start metasploit.service")
@@ -34,17 +45,12 @@ class MetasploitModel:
         self.ShowMessage(Level.info, f"Metasploit Authentication on {user}:{password}@127.0.0.1:{port}...")
         self._client = MsfRpcClient(password, port=port, username=user, ssl=True)
         self._client.login(user=user, password=password)
-        
+
         if self._client.authenticated:
             self.ShowMessage(Level.success, "Authentication completed")
         else:
             self.ShowMessage(Level.error, "Authentication failed !")
-
-        self.console = MsfRpcConsole(self._client, cb=self.read_console)
-
-        print(self._client.db.connect(username=db_user, database=db_name, host=db_ip, port=db_port))
-        print(self._client.db.status)
-        self.client_Isbusy = False
+            exit(1)
 
     def read_console(self, console_data):
         console_read = list()
