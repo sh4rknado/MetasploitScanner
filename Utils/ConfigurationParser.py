@@ -21,10 +21,9 @@ class ConfigurationParser:
         self.config = configparser.ConfigParser()
         self.config.read(config_path)
 
-    def get_metasploit_client(self, main_observer):
-        username, password, ip, port = self._get_configuration_metasploit_service()
-        db_user, db_pass, db_name, db_ip, db_port = self._get_configuration_metasploit_database()
-        return MetasploitModel(username, password, port, db_user, db_name, db_ip, db_port, db_pass, main_observer)
+    @staticmethod
+    def get_metasploit_client(main_observer):
+        return MetasploitModel(main_observer)
 
     def _get_configuration_metasploit_service(self):
         ip = self.config['MetasploitService']['IP']

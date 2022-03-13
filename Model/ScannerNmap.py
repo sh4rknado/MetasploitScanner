@@ -101,7 +101,7 @@ class ScannerNmap(Scanner):
                 self.client.waitclient()
 
             self.ShowMessage(Level.info, "Port discovery starting...")
-            self.client.send_cmd(f"db_nmap --save -sS -T {self._speed} -v {ip}")
+            self.client.send_cmd(f"db_nmap --save -sS -T {self._speed} -v {ip} -oX output/{ip}.xml")
         else:
             self.ShowMessage(Level.error, f"not ip valid : {ip}")
 
@@ -212,11 +212,11 @@ class ScannerNmap(Scanner):
 
         # Discovery Port
         self._port_discovery(ip_scan)
-        self._port_discovery_passive(ip_scan)
-        self._port_dicovery_udp(ip_scan)
+        # self._port_discovery_passive(ip_scan)
+        # self._port_dicovery_udp(ip_scan)
 
         # Discover OS
-        self._os_discovery(ip_scan)
+        # self._os_discovery(ip_scan)
 
     def get_ports(self, ip_scan):
         ports = self._get_port_list(ip_scan)
