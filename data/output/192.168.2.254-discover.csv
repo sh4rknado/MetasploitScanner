@@ -1,0 +1,10 @@
+host,port,proto,name,state,info
+"192.168.2.254","53","tcp","domain","open",""
+"192.168.2.254","80","tcp","http","open",""
+"192.168.2.254","139","tcp","netbios-ssn","open",""
+"192.168.2.254","443","tcp","https","open",""
+"192.168.2.254","445","tcp","microsoft-ds","open",""
+"192.168.2.254","5000","tcp","upnp","open",""
+"192.168.2.254","8080","tcp","http-proxy","open",""
+"192.168.2.254","8443","tcp","https-alt","open",""
+"192.168.2.254","49152","tcp","unknown","open",""

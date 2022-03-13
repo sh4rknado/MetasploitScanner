@@ -14,6 +14,7 @@ import os
 from Model.Scanner import Scanner
 from Utils.Level import Level
 from nmap.nmap import PortScanner
+import csv
 
 
 class ScannerNmap(Scanner):
@@ -27,6 +28,7 @@ class ScannerNmap(Scanner):
         self._output_dir = os.getcwd() + "/data/output"
         self._scripts = os.getcwd() + "/data/scripts"
         self.scan_IsBusy = False
+        self.use_db = True
 
     # ------------------------------------------- < INIT FUNCTION > -------------------------------------------
 
@@ -69,6 +71,18 @@ class ScannerNmap(Scanner):
 
     def _get_port(self, report, ip):
         dir_port_list = f"{self._output_dir}/{ip}-portlist"
+        ports = []
+
+        if report.__contains__(".csv"):
+            with open(report, newline='') as csvfile:
+                spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
+                cpt = 0
+                for row in spamreader:
+                    if cpt > 0:
+                        ports.append(int(row[1].replace('"', "")))
+                    cpt += 1
+
+        print(ports)
 
         cmd = "python3 " + self._scripts + "/nmap_xml_parser.py -f " + report + " -pu | sed -e " + "'" \
               + "s/[^0-9]/ /g" + "'" + " -e " + "'" + "s/^ *//g" + "'" + " -e " + "'" + "s/ *$//g" + "'" \
@@ -96,16 +110,21 @@ class ScannerNmap(Scanner):
     # Port scanner
     def _port_discovery(self, ip):
         if self.validate_ip(ip):
-
-            if self.client.client_Isbusy:
-                self.client.waitclient()
-
             self.ShowMessage(Level.info, "Port discovery starting...")
-            self.client.send_cmd(f"db_nmap --save -sS -T {self._speed} -v {ip} -oX output/{ip}.xml")
+
+            if self.use_db:
+                self.client.send_cmd(f"db_nmap -sS -T {self._speed} -v {ip}")
+                self.client.send_cmd(f"services -R {ip} -o {self._output_dir}/{ip}-discover.csv; exit")
+            else:
+                self.client.send_cmd(f"nmap -sS -T {self._speed} -oX {self._output_dir}/{ip}-discover.xml -v {ip}")
+
         else:
             self.ShowMessage(Level.error, f"not ip valid : {ip}")
 
-        test = self._get_port("/root/.msf4/local/*.xml", ip)
+        if self.use_db:
+            self._get_port(f"{self._output_dir}/{ip}-discover.csv", ip)
+        else:
+            self._get_port(f"{self._output_dir}/{ip}-discover.xml", ip)
         toto = ""
 
     # Port scanner NO PING
