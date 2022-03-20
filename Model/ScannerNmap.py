@@ -14,8 +14,6 @@ import os
 from Utils.NmapXmlParser import NmapXmlParser
 from Model.Scanner import Scanner
 from Utils.Level import Level
-from nmap.nmap import PortScanner
-import csv
 
 
 class ScannerNmap(Scanner):
@@ -89,12 +87,11 @@ class ScannerNmap(Scanner):
 
     # ------------------------------------------- < PORT DISCOVERY > -------------------------------------------
 
-    # Port scanner
-    def _port_discovery(self, ip):
+    def _port_scanner(self, ip, nmap_cmd):
         devices = []
         if self.validate_ip(ip):
             self.ShowMessage(Level.info, "Port discovery starting...")
-            self.client.send_cmd(f"nmap -sS -T {self._speed} -oX {self._output_dir}/{ip}-discover.xml {ip}")
+            self.client.send_cmd(nmap_cmd)
             devices = self._get_devices(f"{self._output_dir}/{ip}-discover.xml")
             self.ShowMessage(Level.success, "Scan Finished\n")
         else:
@@ -103,88 +100,40 @@ class ScannerNmap(Scanner):
         self._show_devices(devices)
         return devices
 
+    # Port scanner
+    def _port_discovery(self, ip):
+        return self._port_scanner(ip, f"nmap -sS -T {self._speed} -oX {self._output_dir}/{ip}-discover.xml {ip}")
+
     # Port scanner NO PING
     def _port_discovery_passive(self, ip):
-        if self.validate_ip(ip):
-
-            if self.client.client_Isbusy:
-                self.client.waitclient()
-
-            self.ShowMessage(Level.info, "starting passive port discovery (no ping)...")
-            self.client.send_cmd(f"db_nmap --save -Pn -T {self._speed} -v {ip}")
-        else:
-            self.ShowMessage(Level.error, f"ip is not valid {ip}")
-
-        self._get_port("/root/.msf4/local/*.xml")
+        return self._port_scanner(ip, f"nmap -Pn -T {self._speed} -oX {self._output_dir}/{ip}-discover.xml {ip}")
 
     # Scan service version UDP
     def _port_dicovery_udp(self, ip):
-        if self.validate_ip(ip):
-
-            if self.client.client_Isbusy:
-                self.client.waitclient()
-
-            self.ShowMessage(Level.info, "Starting port discovery (udp)")
-            self.client.send_cmd(f"db_nmap --save -sUV -T {self._speed} -F --version-intensity 0 -v {ip} ")
-        else:
-            self.ShowMessage(Level.error, f"ip is not valid {ip}")
-
-        self._get_port("/root/.msf4/local/*.xml")
+        return self._port_scanner(ip, f"nmap -sUV -T {self._speed} -F --version-intensity 0 -oX {self._output_dir}/{ip}-udp-discover.xml {ip} ")
 
     # ------------------------------------------- < VERSION DISCOVERY > -------------------------------------------
 
     # OS probe scanner
     def _os_discovery(self, ip):
-        if self.validate_ip(ip):
-
-            if self.client.client_Isbusy:
-                self.client.waitclient()
-
-            self.ShowMessage(Level.info, "Starting os discovery")
-            self.client.send_cmd(f"db_nmap -sV -A -O --osscan-guess -T {self._speed} -v {ip}")
-        else:
-            self.ShowMessage(Level.error, f"ip is not valid {ip}")
+        return self._port_scanner(ip, f"nmap -sV -A -O --osscan-guess -T {self._speed} -oX {self._output_dir}/{ip}-os-discover.xml {ip}")
 
     # Scan service version TCP
     def _scan_version(self, ip, port):
-        if self.validate_ip(ip):
-
-            if self.client.client_Isbusy:
-                self.client.waitclient()
-
-            self.ShowMessage(Level.info, f"starting service discover  on {port}")
-            self.client.send_cmd(f"db_nmap -sS -sV -p {port} -T {self._speed} -v {ip}")
-        else:
-            self.ShowMessage(Level.error, "IP is not valid : {ip}")
+        return self._port_scanner(ip, f"nmap -sS -sV -p {port} -T {self._speed} -oX {self._output_dir}/{ip}-{port}.xml {ip}")
 
     # Scan service version UDP
     def _scan_version_passive(self, ip, port):
-        if self.validate_ip(ip):
-
-            if self.client.client_Isbusy:
-                self.client.waitclient()
-
-            self.ShowMessage(Level.info, f"starting passive service (udp) discover on {port}")
-            self.client.send_cmd(f"db_nmap -Pn -sV -p {port} -T {self._speed} -v {ip}")
-        else:
-            self.ShowMessage(Level.error, f"ip is not valid {ip}")
+        return self._port_scanner(ip, f"nmap -Pn -sV -p {port} -T {self._speed} -oX {self._output_dir}/{ip}-{port}.xml {ip}")
 
     # Scan service version UDP
     def _scan_version_udp(self, ip, port):
-        if self.validate_ip(ip):
-
-            if self.client.client_Isbusy:
-                self.client.waitclient()
-
-            self.ShowMessage(Level.info, f"discover service (udp) on {port}")
-            self.client.send_cmd(f"db_nmap -sUV -p {port} -T {self._speed} -v {ip}")
-        else:
-            self.ShowMessage(Level.error, f"ip is not valid {ip}")
+        return self._port_scanner(ip, f"db_nmap -sUV -p {port} -T {self._speed} -oX {self._output_dir}/{ip}-{port}.xml {ip}")
 
     # ------------------------------------------- < VULNERABILTY DISCOVERY > -------------------------------------------
 
     # Vulnerabilities Scanner
-    def _vuln_discovery(self, ip, port):
+    def vuln_discovery(self, ip, port):
         if self.validate_ip(ip):
             cpt = 0
             self.ShowMessage(Level.info, "Starting vulnerabilities scanner...")
@@ -206,7 +155,7 @@ class ScannerNmap(Scanner):
         self.scan_IsBusy = True
 
         # Discovery Port
-        ports = self._port_discovery(ip_scan)
+        devices = self.port_discovery(ip_scan)
         # self._port_discovery_passive(ip_scan)
         # self._port_dicovery_udp(ip_scan)
 
