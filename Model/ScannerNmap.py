@@ -97,7 +97,7 @@ class ScannerNmap(Scanner):
         if self.validate_ip(ip):
             out_dir = self._check_directory(ip)
             self.ShowMessage(Level.info, "Port discovery starting...")
-            self.client.send_cmd(nmap_cmd + f" -oX {out_dir}/{report} {ip}")
+            self.client.send_cmd(nmap_cmd + f" -oX {out_dir}/{report} {ip} > /dev/null")
             devices = self._get_devices(f"{out_dir}/{report}")
             self.ShowMessage(Level.success, "Scan Finished\n")
         else:
