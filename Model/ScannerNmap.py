@@ -85,14 +85,21 @@ class ScannerNmap(Scanner):
             print(devices[0].service)
             return devices
 
+    def _check_directory(self, ip):
+        out_dir = f"{self._output_dir}/{ip}"
+        if os.path.exists(out_dir):
+            os.makedirs(out_dir)
+        return out_dir
+
     # ------------------------------------------- < PORT DISCOVERY > -------------------------------------------
 
-    def _port_scanner(self, ip, nmap_cmd):
+    def _port_scanner(self, ip, nmap_cmd, report):
         devices = []
         if self.validate_ip(ip):
+            out_dir = self._check_directory(ip)
             self.ShowMessage(Level.info, "Port discovery starting...")
-            self.client.send_cmd(nmap_cmd)
-            devices = self._get_devices(f"{self._output_dir}/{ip}-discover.xml")
+            self.client.send_cmd(nmap_cmd + f" -oX {report} {ip}")
+            devices = self._get_devices(f"{out_dir}/{report}")
             self.ShowMessage(Level.success, "Scan Finished\n")
         else:
             self.ShowMessage(Level.error, f"not ip valid : {ip}")
@@ -102,38 +109,38 @@ class ScannerNmap(Scanner):
 
     # Port scanner
     def _port_discovery(self, ip):
-        return self._port_scanner(ip, f"nmap -sS -T {self._speed} -oX {self._output_dir}/{ip}-discover.xml {ip}")
+        return self._port_scanner(ip, f"nmap -sS -T {self._speed}", "discover.xml")
 
     # Port scanner NO PING
     def _port_discovery_passive(self, ip):
-        return self._port_scanner(ip, f"nmap -Pn -T {self._speed} -oX {self._output_dir}/{ip}-discover.xml {ip}")
+        return self._port_scanner(ip, f"nmap -Pn -T {self._speed}", "discover_passive.xml")
 
     # Scan service version UDP
     def _port_dicovery_udp(self, ip):
-        return self._port_scanner(ip, f"nmap -sUV -T {self._speed} -F --version-intensity 0 -oX {self._output_dir}/{ip}-udp-discover.xml {ip} ")
+        return self._port_scanner(ip, f"nmap -sUV -T {self._speed} -F --version-intensity 0",  "udp-discover.xml")
 
     # ------------------------------------------- < VERSION DISCOVERY > -------------------------------------------
 
     # OS probe scanner
     def _os_discovery(self, ip):
-        return self._port_scanner(ip, f"nmap -sV -A -O --osscan-guess -T {self._speed} -oX {self._output_dir}/{ip}-os-discover.xml {ip}")
+        return self._port_scanner(ip, f"nmap -sV -A -O --osscan-guess -T {self._speed} ", "os_discover.xml")
 
     # Scan service version TCP
     def _scan_version(self, ip, port):
-        return self._port_scanner(ip, f"nmap -sS -sV -p {port} -T {self._speed} -oX {self._output_dir}/{ip}-{port}.xml {ip}")
+        return self._port_scanner(ip, f"nmap -sS -sV -p {port} -T {self._speed}", f"{port}_tcp_version.xml")
 
     # Scan service version UDP
     def _scan_version_passive(self, ip, port):
-        return self._port_scanner(ip, f"nmap -Pn -sV -p {port} -T {self._speed} -oX {self._output_dir}/{ip}-{port}.xml {ip}")
+        return self._port_scanner(ip, f"nmap -Pn -sV -p {port} -T {self._speed}", f"{port}_tcp_passive_version.xml")
 
     # Scan service version UDP
     def _scan_version_udp(self, ip, port):
-        return self._port_scanner(ip, f"db_nmap -sUV -p {port} -T {self._speed} -oX {self._output_dir}/{ip}-{port}.xml {ip}")
+        return self._port_scanner(ip, f"db_nmap -sUV -p {port} -T {self._speed}", f"{port}_udp_version.xml")
 
     # ------------------------------------------- < VULNERABILTY DISCOVERY > -------------------------------------------
 
     # Vulnerabilities Scanner
-    def vuln_discovery(self, ip, port):
+    def _vuln_discovery(self, ip, port):
         if self.validate_ip(ip):
             cpt = 0
             self.ShowMessage(Level.info, "Starting vulnerabilities scanner...")
@@ -155,18 +162,13 @@ class ScannerNmap(Scanner):
         self.scan_IsBusy = True
 
         # Discovery Port
-        devices = self.port_discovery(ip_scan)
+        devices = self._port_discovery(ip_scan)
         # self._port_discovery_passive(ip_scan)
         # self._port_dicovery_udp(ip_scan)
 
         # Discover OS
         # self._os_discovery(ip_scan)
         self.scan_IsBusy = False
-
-    def get_ports(self, ip_scan):
-        ports = self._get_port_list(ip_scan)
-        self.scan_IsBusy = False
-        return ports
 
     def service_discovery(self, ip_scan, ports):
         self.scan_IsBusy = True
