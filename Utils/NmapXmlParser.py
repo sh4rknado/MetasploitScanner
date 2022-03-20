@@ -11,10 +11,9 @@ __email__ = "jordan.bertieaux@std.heh.be"
 __status__ = "Production"
 
 import xml.etree.ElementTree as etree
-import os
-import csv
-import argparse
+from Model.Device import Device
 from collections import Counter
+import traceback
 
 
 class NmapXmlParser:
@@ -26,123 +25,84 @@ class NmapXmlParser:
         try:
             tree = etree.parse(self.fileToParse)
             root = tree.getroot()
-            return self._get_host_data(root)
+            return self._get_available_hosts(root)
         except Exception as error:
-            print("[-] A an error occurred. The XML may not be well formed. "
+            traceback.print_exc()
+            print("[-] A an error occurred. when parse the report "
                   "Please review the error and try again: {}".format(error))
             exit()
 
-    def _get_host_data(self, root):
-        host_data = []
-        hosts = root.findall('host')
-        for host in hosts:
-            addr_info = []
+    def _get_os_discover(self, root_host):
+        try:
+            os_element = root_host.findall('os')
+            os_name = os_element[0].findall('osmatch')[0].attrib['name']
+        except IndexError:
+            os_name = "unknow"
+        return os_name
 
+    def _set_ports_service(self, root_host, device):
+        port_element = root_host.findall('ports')
+        root_ports = port_element[0].findall('port')
+        protocols = []
+        ports = []
+        services_name = []
+        services_product = []
+
+        for port in root_ports:
+
+            #     # Display both open ports and open}filtered ports
+            #     if not 'open' in port.findall('state')[0].attrib['state']:
+            #         continue
+
+            # only if port is open
+            if not port.findall('state')[0].attrib['state'] == 'open':
+                continue
+
+            protocols.append(port.attrib['protocol'])
+            ports.append(port.attrib['portid'])
+            services_name.append(port.findall('service')[0].attrib['name'])
+
+            try:
+                services_product.append(port.findall('service')[0].attrib['product'])
+            except (IndexError, KeyError):
+                services_product.append('unknow')
+
+        device.set_services({
+            'Protocol': protocols,
+            'Port': ports,
+            'ServiceName': services_name,
+            'Product': services_product
+        })
+
+    def _set_ip_hostname(self, host, device):
+        # Get IP a ddress and host info. If no hostname, then ''
+        device.ip = host.findall('address')[0].attrib['addr']
+        host_name_element = host.findall('hostnames')
+        try:
+            device.hostname = host_name_element[0].findall('hostname')[0].attrib['name']
+        except IndexError:
+            device.hostname = ''
+
+    def _get_available_hosts(self, root):
+        devices = []
+
+        for host in root.findall('host'):
             # Ignore hosts that are not 'up'
-            if not host.findall('status')[0].attrib['state'] == 'up':
-                continue
+            if host.findall('status')[0].attrib['state'] == 'up':
+                device = Device()
 
-            # Get IP address and host info. If no hostname, then ''
-            ip_address = host.findall('address')[0].attrib['addr']
-            host_name_element = host.findall('hostnames')
-            try:
-                host_name = host_name_element[0].findall('hostname')[0].attrib['name']
-            except IndexError:
-                host_name = ''
+                # set the hostname and ip address
+                self._set_ip_hostname(host, device)
 
-            # If we only want the IP addresses from the scan, stop here
-            if args.ip_addresses:
-                addr_info.extend((ip_address, host_name))
-                host_data.append(addr_info)
-                continue
+                # set the port and service with version
+                self._set_ports_service(host, device)
 
-            # Get the OS information if available, else ''
-            try:
-                os_element = host.findall('os')
-                os_name = os_element[0].findall('osmatch')[0].attrib['name']
-            except IndexError:
-                os_name = ''
+                # get the OS Detection
+                device.os = self._get_os_discover(host)
 
-            # Get information on ports and services
-            try:
-                port_element = host.findall('ports')
-                ports = port_element[0].findall('port')
-                for port in ports:
-                    port_data = []
+                devices.append(device)
 
-                    if args.udp_open:
-                        # Display both open ports and open}filtered ports
-                        if not 'open' in port.findall('state')[0].attrib['state']:
-                            continue
-                    else:
-                        # Ignore ports that are not 'open'
-                        if not port.findall('state')[0].attrib['state'] == 'open':
-                            continue
-
-                    proto = port.attrib['protocol']
-                    port_id = port.attrib['portid']
-
-                    print("portID : " + port_id)
-
-                    service = port.findall('service')[0].attrib['name']
-                    try:
-                        product = port.findall('service')[0].attrib['product']
-                    except (IndexError, KeyError):
-                        product = ''
-                    try:
-                        servicefp = port.findall('service')[0].attrib['servicefp']
-                    except (IndexError, KeyError):
-                        servicefp = ''
-                    try:
-                        script_id = port.findall('script')[0].attrib['id']
-                    except (IndexError, KeyError):
-                        script_id = ''
-                    try:
-                        script_output = port.findall('script')[0].attrib['output']
-                    except (IndexError, KeyError):
-                        script_output = ''
-
-                    # Create a list of the port data
-                    port_data.extend(port_id)
-
-                    # Add the port data to the host data
-                    host_data.append(port_data)
-
-            # If no port information, just create a list of host information
-            except IndexError:
-                addr_info.extend((ip_address, host_name))
-                host_data.append(addr_info)
-        return host_data
-
-    def _parse_to_csv(self, data):
-        if not os.path.isfile(csv_name):
-            csv_file = open(csv_name, 'w', newline='')
-            csv_writer = csv.writer(csv_file)
-            top_row = [
-                'IP', 'Host', 'OS', 'Proto', 'Port',
-                'Service', 'Product', 'Service FP',
-                'NSE Script ID', 'NSE Script Output', 'Notes'
-            ]
-            csv_writer.writerow(top_row)
-            print('\n[+] The file {} does not exist. New file created!\n'.format(
-                csv_name))
-        else:
-            try:
-                csv_file = open(csv_name, 'a', newline='')
-            except PermissionError as e:
-                print("\n[-] Permission denied to open the file {}. "
-                      "Check if the file is open and try again.\n".format(csv_name))
-                print("Print data to the terminal:\n")
-                if args.debug:
-                    print(e)
-                for item in data:
-                    print(' '.join(item))
-                exit()
-            csv_writer = csv.writer(csv_file)
-            print('\n[+] {} exists. Appending to file!\n'.format(csv_name))
-        for item in data:
-            csv_writer.writerow(item)
-        csv_file.close()
+        return devices
 
     def list_ip_addresses(self, data):
         """Parses the input data to return only the IP address information"""
@@ -184,8 +144,7 @@ class NmapXmlParser:
                 port = item[4]
                 c.update([port])
             except IndexError as e:
-                if args.debug:
-                    print(e)
+                print(e)
                 continue
         print("{0:8} {1:15}\n".format('PORT', 'OCCURENCES'))
         for p in c.most_common()[:-n - 1:-1]:
@@ -199,8 +158,7 @@ class NmapXmlParser:
                 port = item[4]
                 c.update([port])
             except IndexError as e:
-                if args.debug:
-                    print(e)
+                print(e)
                 continue
         print("{0:8} {1:15}\n".format('PORT', 'OCCURENCES'))
         for p in c.most_common(n):
@@ -214,8 +172,7 @@ class NmapXmlParser:
             try:
                 port = item[4]
             except IndexError as e:
-                if args.debug:
-                    print(e)
+                print(e)
                 continue
             if port == filtered_port:
                 print(item[0])
@@ -227,30 +184,5 @@ class NmapXmlParser:
 
     def ParseFile(self):
         data = self._parse_xml()
+        return data
 
-        """Main function of the script."""
-        for filename in args.filename:
-
-            if not data:
-                print("[*] Zero hosts identitified as 'Up' or with 'open' ports. "
-                      "Use the -u option to display ports that are 'open|filtered'. "
-                      "Exiting.")
-                exit()
-            if args.csv:
-                parse_to_csv(data)
-            if args.ip_addresses:
-                addrs = list_ip_addresses(data)
-                for addr in addrs:
-                    print(addr)
-            if args.print_all:
-                print_data(data)
-            if args.filter_by_port:
-                print_filtered_port(data, args.filter_by_port)
-            if args.print_web_ports:
-                print_web_ports(data)
-            if args.least_common_ports:
-                print("\n{} LEAST COMMON PORTS".format(filename.upper()))
-                least_common_ports(data, args.least_common_ports)
-            if args.most_common_ports:
-                print("\n{} MOST COMMON PORTS".format(filename.upper()))
-                most_common_ports(data, args.most_common_ports)

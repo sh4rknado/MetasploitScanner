@@ -11,6 +11,7 @@ __email__ = "jordan.bertieaux@std.heh.be"
 __status__ = "Production"
 
 import os
+from Utils.NmapXmlParser import NmapXmlParser
 from Model.Scanner import Scanner
 from Utils.Level import Level
 from nmap.nmap import PortScanner
@@ -28,7 +29,6 @@ class ScannerNmap(Scanner):
         self._output_dir = os.getcwd() + "/data/output"
         self._scripts = os.getcwd() + "/data/scripts"
         self.scan_IsBusy = False
-        self.use_db = False
 
     # ------------------------------------------- < INIT FUNCTION > -------------------------------------------
 
@@ -67,65 +67,41 @@ class ScannerNmap(Scanner):
             self.ShowMessage(Level.info, "update the db now ...")
             os.system(f"echo  {self._sudo_password}  | sudo -S bash {path}")
 
+    # ------------------------------------------- < SHOW INFOS > -------------------------------------------
+
+    def _show_devices(self, devices):
+        self.ShowMessage(Level.info, "-------------------------- < DEVICE INFOS > ---------------------------")
+
+        for device in devices:
+            self.ShowMessage(Level.info, f"ip address : {device.ip}")
+            self.ShowMessage(Level.info, f"hostname : {device.hostname}")
+            self.ShowMessage(Level.info, f"OS : {device.os}")
+            self.ShowMessage(Level.info, f"Available Services \n {device.service}\n\n")
+
     # ------------------------------------------- < REPORT ANALYSE > -------------------------------------------
 
-    def _get_port(self, report, ip):
-        dir_port_list = f"{self._output_dir}/{ip}-portlist"
-        ports = []
-
-        if report.__contains__(".csv"):
-            with open(report, newline='') as csvfile:
-                sr = csv.reader(csvfile, delimiter=',', quotechar='|')
-                cpt = 0
-                for row in sr:
-                    if cpt > 0:
-                        ports.append(int(row[1].replace('"', "")))
-                    cpt += 1
-            return ports
-        elif report.__contains__(".xml"):
-            cmd = "python3 " + self._scripts + "/nmap_xml_parser.py -f " + report + " -pu | sed -e " + "'" \
-                  + "s/[^0-9]/ /g" + "'" + " -e " + "'" + "s/^ *//g" + "'" + " -e " + "'" + "s/ *$//g" + "'" \
-                  + " | tr -s " + "' " + "'" + " | sed " + "'" + "s/ /" + "\\n" + "/g" + "'" + " >> " + dir_port_list
-            return os.system(cmd)
-
-    def _get_port_list(self, ip):
-        dir_port_list = f"{self._output_dir}/{ip}-portlist"
-        ports = []
-        if not os.path.isfile(dir_port_list):
-            self.ShowMessage(Level.error, f"port list not found : {dir_port_list}")
-        else:
-            self.ShowMessage(Level.info, "Get list of scanned hosts\n")
-            temp = open(dir_port_list, 'r').read().split('\n')
-
-            for x in temp:
-                if x != '' and not ports.__contains__(x):
-                    ports.append(str(x))
-            self.ShowMessage(Level.success, f"enumerate port completed : \n{ports}\n")
-
-        return ports
+    def _get_devices(self, report):
+        if report.__contains__(".xml"):
+            nmap_parser = NmapXmlParser(report)
+            devices = nmap_parser.ParseFile()
+            print(devices[0].service)
+            return devices
 
     # ------------------------------------------- < PORT DISCOVERY > -------------------------------------------
 
     # Port scanner
     def _port_discovery(self, ip):
+        devices = []
         if self.validate_ip(ip):
             self.ShowMessage(Level.info, "Port discovery starting...")
-
-            if self.use_db:
-                self.client.send_cmd(f"db_nmap -sS -T {self._speed} -v {ip}")
-                self.client.send_cmd(f"services -R {ip} -o {self._output_dir}/{ip}-discover.csv; exit")
-            else:
-                self.client.send_cmd(f"nmap -sS -T {self._speed} -oX {self._output_dir}/{ip}-discover.xml -v {ip}")
-
+            self.client.send_cmd(f"nmap -sS -T {self._speed} -oX {self._output_dir}/{ip}-discover.xml {ip}")
+            devices = self._get_devices(f"{self._output_dir}/{ip}-discover.xml")
+            self.ShowMessage(Level.success, "Scan Finished\n")
         else:
             self.ShowMessage(Level.error, f"not ip valid : {ip}")
 
-        if self.use_db:
-            ports = self._get_port(f"{self._output_dir}/{ip}-discover.csv", ip)
-        else:
-            ports = self._get_port(f"{self._output_dir}/{ip}-discover.xml", ip)
-
-        print(f"Open ports \n {ports}")
+        self._show_devices(devices)
+        return devices
 
     # Port scanner NO PING
     def _port_discovery_passive(self, ip):
@@ -139,7 +115,7 @@ class ScannerNmap(Scanner):
         else:
             self.ShowMessage(Level.error, f"ip is not valid {ip}")
 
-        self._get_port("/root/.msf4/local/*.xml", ip)
+        self._get_port("/root/.msf4/local/*.xml")
 
     # Scan service version UDP
     def _port_dicovery_udp(self, ip):
@@ -153,7 +129,7 @@ class ScannerNmap(Scanner):
         else:
             self.ShowMessage(Level.error, f"ip is not valid {ip}")
 
-        self._get_port("/root/.msf4/local/*.xml", ip)
+        self._get_port("/root/.msf4/local/*.xml")
 
     # ------------------------------------------- < VERSION DISCOVERY > -------------------------------------------
 
@@ -230,7 +206,7 @@ class ScannerNmap(Scanner):
         self.scan_IsBusy = True
 
         # Discovery Port
-        self._port_discovery(ip_scan)
+        ports = self._port_discovery(ip_scan)
         # self._port_discovery_passive(ip_scan)
         # self._port_dicovery_udp(ip_scan)
 
