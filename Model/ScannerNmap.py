@@ -28,7 +28,7 @@ class ScannerNmap(Scanner):
         self._output_dir = os.getcwd() + "/data/output"
         self._scripts = os.getcwd() + "/data/scripts"
         self.scan_IsBusy = False
-        self.use_db = True
+        self.use_db = False
 
     # ------------------------------------------- < INIT FUNCTION > -------------------------------------------
 
@@ -75,19 +75,18 @@ class ScannerNmap(Scanner):
 
         if report.__contains__(".csv"):
             with open(report, newline='') as csvfile:
-                spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
+                sr = csv.reader(csvfile, delimiter=',', quotechar='|')
                 cpt = 0
-                for row in spamreader:
+                for row in sr:
                     if cpt > 0:
                         ports.append(int(row[1].replace('"', "")))
                     cpt += 1
-
-        print(ports)
-
-        cmd = "python3 " + self._scripts + "/nmap_xml_parser.py -f " + report + " -pu | sed -e " + "'" \
-              + "s/[^0-9]/ /g" + "'" + " -e " + "'" + "s/^ *//g" + "'" + " -e " + "'" + "s/ *$//g" + "'" \
-              + " | tr -s " + "' " + "'" + " | sed " + "'" + "s/ /" + "\\n" + "/g" + "'" + " >> " + dir_port_list
-        return os.system(cmd)
+            return ports
+        elif report.__contains__(".xml"):
+            cmd = "python3 " + self._scripts + "/nmap_xml_parser.py -f " + report + " -pu | sed -e " + "'" \
+                  + "s/[^0-9]/ /g" + "'" + " -e " + "'" + "s/^ *//g" + "'" + " -e " + "'" + "s/ *$//g" + "'" \
+                  + " | tr -s " + "' " + "'" + " | sed " + "'" + "s/ /" + "\\n" + "/g" + "'" + " >> " + dir_port_list
+            return os.system(cmd)
 
     def _get_port_list(self, ip):
         dir_port_list = f"{self._output_dir}/{ip}-portlist"
@@ -122,10 +121,11 @@ class ScannerNmap(Scanner):
             self.ShowMessage(Level.error, f"not ip valid : {ip}")
 
         if self.use_db:
-            self._get_port(f"{self._output_dir}/{ip}-discover.csv", ip)
+            ports = self._get_port(f"{self._output_dir}/{ip}-discover.csv", ip)
         else:
-            self._get_port(f"{self._output_dir}/{ip}-discover.xml", ip)
-        toto = ""
+            ports = self._get_port(f"{self._output_dir}/{ip}-discover.xml", ip)
+
+        print(f"Open ports \n {ports}")
 
     # Port scanner NO PING
     def _port_discovery_passive(self, ip):
@@ -236,6 +236,7 @@ class ScannerNmap(Scanner):
 
         # Discover OS
         # self._os_discovery(ip_scan)
+        self.scan_IsBusy = False
 
     def get_ports(self, ip_scan):
         ports = self._get_port_list(ip_scan)
