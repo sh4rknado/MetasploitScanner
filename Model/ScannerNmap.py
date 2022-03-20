@@ -82,7 +82,6 @@ class ScannerNmap(Scanner):
         if report.__contains__(".xml"):
             nmap_parser = NmapXmlParser(report)
             devices = nmap_parser.ParseFile()
-            print(devices[0].service)
             return devices
 
     def _check_directory(self, ip):
