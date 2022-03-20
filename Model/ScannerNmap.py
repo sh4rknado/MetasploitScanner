@@ -11,6 +11,7 @@ __email__ = "jordan.bertieaux@std.heh.be"
 __status__ = "Production"
 
 import os
+import pickle
 from Utils.NmapXmlParser import NmapXmlParser
 from Model.Scanner import Scanner
 from Utils.Level import Level
@@ -24,9 +25,8 @@ class ScannerNmap(Scanner):
         self._sudo_password = sudo_pass
         self._db = []
         self._init_db()
-        self._output_dir = os.getcwd() + "/data/output"
-        self._scripts = os.getcwd() + "/data/scripts"
         self.scan_IsBusy = False
+        self._scan_cache = []
 
     # ------------------------------------------- < INIT FUNCTION > -------------------------------------------
 
@@ -83,18 +83,9 @@ class ScannerNmap(Scanner):
             nmap_parser = NmapXmlParser(report)
             return nmap_parser.Parse_xml(devices)
 
-    def _check_directory(self, ip):
-        out_dir = f"{self._output_dir}/{ip}"
-        if not os.path.exists(out_dir):
-            os.makedirs(out_dir)
-        return out_dir
-
     # ------------------------------------------- < PORT DISCOVERY > -------------------------------------------
 
     def _port_scanner(self, ip, nmap_cmd, report, devices):
-        if devices is None:
-            devices = []
-
         if self.validate_ip(ip):
             out_dir = self._check_directory(ip)
             self.client.send_cmd(nmap_cmd + f" -oX {out_dir}/{report} {ip} > /dev/null")
@@ -176,21 +167,39 @@ class ScannerNmap(Scanner):
 
     def service_discovery(self, ip_scan):
         self.scan_IsBusy = True
-        self.ShowMessage(Level.info, "Service discovery starting...")
+        devices, scanned = self._resume_scan(ip_scan)
 
-        # Discovery Port
-        devices = self._port_discovery(ip_scan)
-        devices = self._port_discovery_passive(ip_scan, devices)
-        devices = self._port_dicovery_udp(ip_scan, devices)
-        self._show_devices(devices)
+        if "port_discovery" not in scanned:
+            self.ShowMessage(Level.info, f"[*] service discovery starting ...")
+            devices = self._port_discovery(ip_scan, devices)
+            scanned.append("port_discovery")
+            self._save_scan(ip_scan, scanned, devices)
 
-        # service discovery
-        devices = self._service_discovery(devices)
-        self._show_devices(devices)
+        if "port_discovery_passive" not in scanned:
+            self.ShowMessage(Level.info, f"[*] service passive scanning ...")
+            devices = self._port_discovery_passive(ip_scan, devices)
+            scanned.append("port_discovery_passive")
+            self._save_scan(ip_scan, scanned, devices)
 
-        # Discover OS
-        devices = self._os_discovery(ip_scan)
-        self._show_devices(devices)
+        if "port_dicovery_udp" not in scanned:
+            self.ShowMessage(Level.info, f"[*] service udp scanning ...")
+            devices = self._port_dicovery_udp(ip_scan, devices)
+            scanned.append("port_dicovery_udp")
+            self._save_scan(ip_scan, scanned, devices)
+
+        if "os_discovery" not in scanned:
+            self.ShowMessage(Level.info, f"[*] os discovery ...")
+            devices = self._os_discovery(ip_scan)
+            scanned.append("os_discovery")
+            self._save_scan(ip_scan, scanned, devices)
+            self._show_devices(devices)
+
+        # if "service_discovery" not in scanned:
+        #     self.ShowMessage(Level.info, f"[*] service udp scanning ...")
+        #     devices = self._service_discovery(devices)
+        #     scanned.append("service_discovery")
+        #     self._save_scan(ip_scan, scanned, devices)
+        #     self._show_devices(devices)
 
         self.ShowMessage(Level.success, "Service discovery finished...")
         self.scan_IsBusy = False
