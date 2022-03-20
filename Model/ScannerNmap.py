@@ -131,22 +131,23 @@ class ScannerNmap(Scanner):
 
     # Scan service version UDP
     def _scan_version_udp(self, ip, port, devices=None):
-        return self._port_scanner(ip, f"db_nmap -sUV -p {port} -T {self._speed}", f"{port}_udp_version.xml", devices)
+        return self._port_scanner(ip, f"nmap -sUV -p {port} -T {self._speed}", f"{port}_udp_version.xml", devices)
 
     def _service_discovery(self, devices):
         new_devices = []
         for device in devices:
             protocols, ports, services, products = device.get_service_available()
             idx = 0
+            total_port = len(ports)
             for port in ports:
                 protocol = protocols[idx]
                 if protocol == 'tcp':
-                    self.ShowMessage(Level.info, f"[PROCESS] discovery service ({port}/TCP) : {idx/2}/{len(ports)}")
+                    self.ShowMessage(Level.info, f"[PROCESS] discovery service ({port}/TCP) : {idx+0.5}/{total_port}")
                     new_devices.append(self._scan_version_passive(device.ip, port, devices))
-                    self.ShowMessage(Level.info, f"[PROCESS] discovery service passive ({port}/TCP) : {idx}/{len(ports)}")
+                    self.ShowMessage(Level.info, f"[PROCESS] discovery service passive ({port}/TCP) : {idx+1}/{total_port}")
                     new_devices.append(self._scan_version(device.ip, port, devices))
                 elif protocol == 'udp':
-                    self.ShowMessage(Level.info, f"[PROCESS] discovery service ({port}/UDP): {idx}/{len(ports)}")
+                    self.ShowMessage(Level.info, f"[PROCESS] discovery service ({port}/UDP): {idx+1}/{total_port}")
                     new_devices.append(self._scan_version_udp(device.ip, port, devices))
                 idx += 1
 
@@ -167,7 +168,7 @@ class ScannerNmap(Scanner):
 
                 cpt += 1
                 self.ShowMessage(Level.info, "Processing vuln-scan on {port} with {db} : {cpt}/{len(self._db)}")
-                self.client.send_cmd(f"db_nmap --script nmap-vulners,vulscan --script-args vulscandb={db} -sV -p {port} {ip} ")
+                self.client.send_cmd(f"nmap --script nmap-vulners,vulscan --script-args vulscandb={db} -sV -p {port} {ip} ")
         else:
             self.ShowMessage(Level.error, f"ip is not valid {ip}")
 
@@ -179,11 +180,7 @@ class ScannerNmap(Scanner):
 
         # Discovery Port
         devices = self._port_discovery(ip_scan)
-        self._show_devices(devices)
-
         devices = self._port_discovery_passive(ip_scan, devices)
-        self._show_devices(devices)
-
         devices = self._port_dicovery_udp(ip_scan, devices)
         self._show_devices(devices)
 
