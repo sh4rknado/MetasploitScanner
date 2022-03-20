@@ -78,11 +78,10 @@ class ScannerNmap(Scanner):
 
     # ------------------------------------------- < REPORT ANALYSE > -------------------------------------------
 
-    def _get_devices(self, report):
+    def _update_devices(self, report, devices):
         if report.__contains__(".xml"):
             nmap_parser = NmapXmlParser(report)
-            devices = nmap_parser.ParseFile()
-            return devices
+            return nmap_parser.Parse_xml(devices)
 
     def _check_directory(self, ip):
         out_dir = f"{self._output_dir}/{ip}"
@@ -92,49 +91,66 @@ class ScannerNmap(Scanner):
 
     # ------------------------------------------- < PORT DISCOVERY > -------------------------------------------
 
-    def _port_scanner(self, ip, nmap_cmd, report):
-        devices = []
+    def _port_scanner(self, ip, nmap_cmd, report, devices):
+        if devices is None:
+            devices = []
+
         if self.validate_ip(ip):
             out_dir = self._check_directory(ip)
-            self.ShowMessage(Level.info, "Port discovery starting...")
             self.client.send_cmd(nmap_cmd + f" -oX {out_dir}/{report} {ip} > /dev/null")
-            devices = self._get_devices(f"{out_dir}/{report}")
-            self.ShowMessage(Level.success, "Scan Finished\n")
+            devices = self._update_devices(f"{out_dir}/{report}", devices)
         else:
             self.ShowMessage(Level.error, f"not ip valid : {ip}")
-
-        self._show_devices(devices)
         return devices
 
     # Port scanner
-    def _port_discovery(self, ip):
-        return self._port_scanner(ip, f"nmap -sS -T {self._speed}", "discover.xml")
+    def _port_discovery(self, ip, devices=None):
+        return self._port_scanner(ip, f"nmap -sS -T {self._speed}", "discover.xml", devices)
 
     # Port scanner NO PING
-    def _port_discovery_passive(self, ip):
-        return self._port_scanner(ip, f"nmap -Pn -T {self._speed}", "discover_passive.xml")
+    def _port_discovery_passive(self, ip, devices=None):
+        return self._port_scanner(ip, f"nmap -Pn -T {self._speed}", "discover_passive.xml", devices)
 
     # Scan service version UDP
-    def _port_dicovery_udp(self, ip):
-        return self._port_scanner(ip, f"nmap -sUV -T {self._speed} -F --version-intensity 0",  "udp-discover.xml")
+    def _port_dicovery_udp(self, ip, devices=None):
+        return self._port_scanner(ip, f"nmap -sUV -T {self._speed} -F --version-intensity 0",  "udp-discover.xml", devices)
 
     # ------------------------------------------- < VERSION DISCOVERY > -------------------------------------------
 
     # OS probe scanner
-    def _os_discovery(self, ip):
-        return self._port_scanner(ip, f"nmap -sV -A -O --osscan-guess -T {self._speed} ", "os_discover.xml")
+    def _os_discovery(self, ip, devices=None):
+        return self._port_scanner(ip, f"nmap -sV -A -O --osscan-guess -T {self._speed} ", "os_discover.xml", devices)
 
     # Scan service version TCP
-    def _scan_version(self, ip, port):
-        return self._port_scanner(ip, f"nmap -sS -sV -p {port} -T {self._speed}", f"{port}_tcp_version.xml")
+    def _scan_version(self, ip, port, devices=None):
+        return self._port_scanner(ip, f"nmap -sS -sV -p {port} -T {self._speed}", f"{port}_tcp_version.xml", devices)
 
     # Scan service version UDP
-    def _scan_version_passive(self, ip, port):
-        return self._port_scanner(ip, f"nmap -Pn -sV -p {port} -T {self._speed}", f"{port}_tcp_passive_version.xml")
+    def _scan_version_passive(self, ip, port, devices=None):
+        return self._port_scanner(ip, f"nmap -Pn -sV -p {port} -T {self._speed}", f"{port}_tcp_passive_version.xml", devices)
 
     # Scan service version UDP
-    def _scan_version_udp(self, ip, port):
-        return self._port_scanner(ip, f"db_nmap -sUV -p {port} -T {self._speed}", f"{port}_udp_version.xml")
+    def _scan_version_udp(self, ip, port, devices=None):
+        return self._port_scanner(ip, f"db_nmap -sUV -p {port} -T {self._speed}", f"{port}_udp_version.xml", devices)
+
+    def _service_discovery(self, devices):
+        new_devices = []
+        for device in devices:
+            protocols, ports, services, products = device.get_service_available()
+            idx = 0
+            for port in ports:
+                protocol = protocols[idx]
+                if protocol == 'tcp':
+                    self.ShowMessage(Level.info, f"[PROCESS] discovery service ({port}/TCP) : {idx/2}/{len(ports)}")
+                    new_devices.append(self._scan_version_passive(device.ip, port, devices))
+                    self.ShowMessage(Level.info, f"[PROCESS] discovery service passive ({port}/TCP) : {idx}/{len(ports)}")
+                    new_devices.append(self._scan_version(device.ip, port, devices))
+                elif protocol == 'udp':
+                    self.ShowMessage(Level.info, f"[PROCESS] discovery service ({port}/UDP): {idx}/{len(ports)}")
+                    new_devices.append(self._scan_version_udp(device.ip, port, devices))
+                idx += 1
+
+        return new_devices
 
     # ------------------------------------------- < VULNERABILTY DISCOVERY > -------------------------------------------
 
@@ -157,36 +173,29 @@ class ScannerNmap(Scanner):
 
     # ------------------------------------------- < SMART DISCOVERY > -------------------------------------------
 
-    def port_discovery(self, ip_scan):
+    def service_discovery(self, ip_scan):
         self.scan_IsBusy = True
+        self.ShowMessage(Level.info, "Service discovery starting...")
 
         # Discovery Port
         devices = self._port_discovery(ip_scan)
-        # self._port_discovery_passive(ip_scan)
-        # self._port_dicovery_udp(ip_scan)
+        self._show_devices(devices)
+
+        devices = self._port_discovery_passive(ip_scan, devices)
+        self._show_devices(devices)
+
+        devices = self._port_dicovery_udp(ip_scan, devices)
+        self._show_devices(devices)
+
+        # service discovery
+        devices = self._service_discovery(devices)
+        self._show_devices(devices)
 
         # Discover OS
-        # self._os_discovery(ip_scan)
-        self.scan_IsBusy = False
+        devices = self._os_discovery(ip_scan)
+        self._show_devices(devices)
 
-    def service_discovery(self, ip_scan, ports):
-        self.scan_IsBusy = True
-        os.system("clear")
-        self.ShowMessage(Level.info, "starting discovery service...")
-
-        # Scan TCP Version
-        cpt = 0
-        for p in ports:
-            cpt += 1
-            self.ShowMessage(Level.info, f"[PROCESS] scan service TCP : {cpt}/{len(ports)}")
-            self._scan_version(ip=ip_scan, port=p)
-
-            self.ShowMessage(Level.info, f"[PROCESS] discovery service (passive TCP) : {cpt}/{len(ports)}")
-            self._scan_version_passive(ip=ip_scan, port=p)
-
-            self.ShowMessage(Level.info, f"[PROCESS] discovery service (UDP) : {cpt}/{len(ports)}")
-            self._scan_version_udp(ip=ip_scan, port=p)
-
+        self.ShowMessage(Level.success, "Service discovery finished...")
         self.scan_IsBusy = False
 
     def vuln_discovery(self, ip_scan, port):

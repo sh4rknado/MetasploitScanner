@@ -24,3 +24,16 @@ class Device:
     def set_services(self, d):
         self.service = pd.DataFrame(d)
 
+    def get_service_available(self):
+        protocols = []
+        ports = []
+        services_name = []
+        products = []
+
+        if len(self.service.columns.values.tolist()) > 0:
+            protocols = self.service['Protocol'].tolist()
+            ports = self.service['Port'].tolist()
+            services_name = self.service['ServiceName'].tolist()
+            products = self.service['Product'].tolist()
+
+        return protocols, ports, services_name, products

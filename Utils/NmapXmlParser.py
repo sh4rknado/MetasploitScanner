@@ -21,16 +21,12 @@ class NmapXmlParser:
     def __init__(self, file):
         self.fileToParse = file
 
-    def _parse_xml(self):
-        try:
-            tree = etree.parse(self.fileToParse)
-            root = tree.getroot()
-            return self._get_available_hosts(root)
-        except Exception as error:
-            traceback.print_exc()
-            print("[-] A an error occurred. when parse the report "
-                  "Please review the error and try again: {}".format(error))
-            exit()
+    def _get_device_available(self, ip, device, devices):
+        for d in devices:
+            if d.ip == ip:
+                return d
+        return device
+
 
     def _get_os_discover(self, root_host):
         try:
@@ -43,38 +39,54 @@ class NmapXmlParser:
     def _set_ports_service(self, root_host, device):
         port_element = root_host.findall('ports')
         root_ports = port_element[0].findall('port')
-        protocols = []
-        ports = []
-        services_name = []
-        services_product = []
+        protocols, ports, services, products = device.get_service_available()
 
         for port in root_ports:
-
-            #     # Display both open ports and open}filtered ports
-            #     if not 'open' in port.findall('state')[0].attrib['state']:
-            #         continue
-
             # only if port is open
             if not port.findall('state')[0].attrib['state'] == 'open':
                 continue
 
-            protocols.append(port.attrib['protocol'])
-            ports.append(port.attrib['portid'])
-            services_name.append(port.findall('service')[0].attrib['name'])
-
+            protocol_name = port.attrib['protocol']
+            port_name = port.attrib['portid']
+            services_name = port.findall('service')[0].attrib['name']
+            product_name = "unknow"
             try:
-                services_product.append(port.findall('service')[0].attrib['product'])
+                product_name = port.findall('service')[0].attrib['product']
             except (IndexError, KeyError):
-                services_product.append('unknow')
+                pass
+
+            # add new infos
+            if not ports.__contains__(port_name):
+                ports.append(port_name)
+                services.append(services_name)
+                products.append(product_name)
+                protocols.append(protocol_name)
+            else:
+                idx = ports.index(port_name)
+                old_service_name = services[idx]
+                old_product_name = products[idx]
+                old_protocol_name = protocols[idx]
+
+                if old_service_name == "" or old_service_name == "unknow":
+                    services[idx] = services_name
+                if old_product_name == "" or old_product_name == "unknow":
+                    products[idx] = product_name
+                if old_protocol_name == "" or old_protocol_name == "unknow":
+                    protocols[idx] = protocol_name
 
         device.set_services({
             'Protocol': protocols,
             'Port': ports,
-            'ServiceName': services_name,
-            'Product': services_product
+            'ServiceName': services,
+            'Product': products
         })
 
-    def _set_ip_hostname(self, host, device):
+        return device
+
+    def _set_ip_hostname(self, host, device, devices):
+        ip = host.findall('address')[0].attrib['addr']
+        device = self._get_device_available(ip, device, devices)
+
         # Get IP a ddress and host info. If no hostname, then ''
         device.ip = host.findall('address')[0].attrib['addr']
         host_name_element = host.findall('hostnames')
@@ -83,26 +95,27 @@ class NmapXmlParser:
         except IndexError:
             device.hostname = ''
 
-    def _get_available_hosts(self, root):
-        devices = []
+        return device
 
+    def _get_available_hosts(self, root, devices):
+        new_devices = []
         for host in root.findall('host'):
             # Ignore hosts that are not 'up'
             if host.findall('status')[0].attrib['state'] == 'up':
                 device = Device()
 
                 # set the hostname and ip address
-                self._set_ip_hostname(host, device)
+                device = self._set_ip_hostname(host, device, devices)
 
                 # set the port and service with version
-                self._set_ports_service(host, device)
+                device = self._set_ports_service(host, device)
 
                 # get the OS Detection
                 device.os = self._get_os_discover(host)
 
-                devices.append(device)
+                new_devices.append(device)
 
-        return devices
+        return new_devices
 
     def list_ip_addresses(self, data):
         """Parses the input data to return only the IP address information"""
@@ -182,7 +195,14 @@ class NmapXmlParser:
         for item in data:
             print(' '.join(item))
 
-    def ParseFile(self):
-        data = self._parse_xml()
-        return data
+    def Parse_xml(self, devices):
+        try:
+            tree = etree.parse(self.fileToParse)
+            root = tree.getroot()
+            return self._get_available_hosts(root, devices)
+        except Exception as error:
+            traceback.print_exc()
+            print("[-] A an error occurred. when parse the report "
+                  "Please review the error and try again: {}".format(error))
+            exit()
 

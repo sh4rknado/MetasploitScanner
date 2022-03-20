@@ -44,6 +44,6 @@ class Controller(Subject):
         return client, scanner
 
     def get_port(self, ip):
-        ports = self.scanner.port_discovery(ip)
+        ports = self.scanner.service_discovery(ip)
         toto = ""
 

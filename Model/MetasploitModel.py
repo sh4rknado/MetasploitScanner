@@ -29,8 +29,8 @@ class MetasploitModel:
         self.client_Isbusy = False
 
     def send_cmd(self, cmd):
-        result = os.system(f"msfconsole -q -x '{cmd};exit'")
-        self._show_message(Level.info, f"[MSF-CMD] {cmd} => {result}\n")
+        # self._show_message(Level.info, f"[*] {cmd}")
+        return os.system(cmd)
 
     def _show_message(self, level, message):
         self._observer.update_observer(level, message)
