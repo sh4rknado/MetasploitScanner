@@ -87,7 +87,7 @@ class ScannerNmap(Scanner):
 
     def _check_directory(self, ip):
         out_dir = f"{self._output_dir}/{ip}"
-        if os.path.exists(out_dir):
+        if not os.path.exists(out_dir):
             os.makedirs(out_dir)
         return out_dir
 
@@ -98,7 +98,7 @@ class ScannerNmap(Scanner):
         if self.validate_ip(ip):
             out_dir = self._check_directory(ip)
             self.ShowMessage(Level.info, "Port discovery starting...")
-            self.client.send_cmd(nmap_cmd + f" -oX {report} {ip}")
+            self.client.send_cmd(nmap_cmd + f" -oX {out_dir}/{report} {ip}")
             devices = self._get_devices(f"{out_dir}/{report}")
             self.ShowMessage(Level.success, "Scan Finished\n")
         else:
